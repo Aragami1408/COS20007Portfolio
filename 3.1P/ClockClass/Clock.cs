@@ -1,4 +1,4 @@
-namespace COS20007Portfolio;
+﻿namespace COS20007Portfolio;
 
 public class Clock
 {
@@ -20,16 +20,29 @@ public class Clock
     public void Tick()
     {
         _seconds.Increment();
+        if (_seconds.Ticks == 60) {
+            _minutes.Increment();
+            _seconds.Reset();
+            if (_minutes.Ticks == 60) {
+                _hours.Increment();
+                _minutes.Reset();
+                if (_hours.Ticks == 24) {
+                    Reset();
+                }
+            }
+        }
     }
 
     public void Reset()
     {
-
+        _seconds.Reset();
+        _minutes.Reset();
+        _hours.Reset();
     }
 
-    public string ToString()
+    public string CurrentTime()
     {
-        throw new NotImplementedException("");
+        return String.Format("{0:00}:{1:00}:{2:00}", _hours.Ticks, _minutes.Ticks, _seconds.Ticks);
     }
 
     public Counter Hours

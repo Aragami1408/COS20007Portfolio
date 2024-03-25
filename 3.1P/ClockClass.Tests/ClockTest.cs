@@ -7,10 +7,8 @@ public class ClockTest
     public void ClockInitializationTest()
     {
         Clock clock = new Clock();
-
-        string currentTime = clock.ToString();
-
-        Assert.AreEqual("00:00:00", currentTime);
+        string currentTime = clock.CurrentTime();
+        Assert.That(currentTime, Is.EqualTo("00:00:00"));
     }
 
     [Test]
@@ -19,44 +17,72 @@ public class ClockTest
         Clock clock = new Clock();
 
         clock.Tick();
-        string currentTimeAfterTick = clock.ToString();
-
-        Assert.AreEqual("00:00:01", currentTimeAfterTick);
+        string currentTime = clock.CurrentTime();
+        Assert.That(currentTime, Is.EqualTo("00:00:01"));
+        
     }
 
     [Test]
-    public void TestClockTickMinutes()
+    public void ClockTickMinutesTest()
     {
         // Arrange
         Clock clock = new Clock();
-        // Setting the clock to 23:59:58
-        clock.Hours.Ticks = 23;
-        clock.Minutes.Ticks = 59;
-        clock.Seconds.Ticks = 58;
+
+        for (int i = 1; i <= 59; i++)
+            clock.Tick();
 
         // Act
         clock.Tick();
-        string currentTimeAfterTick = clock.ToString();
+        string currentTime = clock.CurrentTime();
 
         // Assert
-        Assert.AreEqual("23:59:59", currentTimeAfterTick);
+        Assert.That(currentTime, Is.EqualTo("00:01:00"));
     }
 
     [Test]
-    public void TestClockReset()
+    public void TestClockTickHours() 
+    {
+        Clock clock = new Clock();
+
+        for (int i = 1; i <= 3599; i++)
+            clock.Tick();
+
+        clock.Tick();
+        string CurrentTime = clock.CurrentTime();
+
+        Assert.That(CurrentTime, Is.EqualTo("01:00:00"));
+    }
+
+    [Test]
+    public void ClockDone24HoursTest() 
+    {
+        Clock clock = new Clock();
+
+        for (int i = 1; i <= 86399; i++)
+            clock.Tick();
+
+        clock.Tick();
+        string CurrentTime = clock.CurrentTime();
+
+        Assert.That(CurrentTime, Is.EqualTo("00:00:00"));    
+    }
+
+    [Test]
+    public void ClockResetTest()
     {
         // Arrange
         Clock clock = new Clock();
-        // Setting the clock to 12:34:56
-        clock.Hours.Ticks = 12;
-        clock.Minutes.Ticks = 34;
-        clock.Seconds.Ticks = 56;
+        // Setting the clock to 12:34:56 
+        for (int i = 1; i <= 45296; i++)
+            clock.Tick();
 
         // Act
         clock.Reset();
-        string currentTimeAfterReset = clock.ToString();
+        string currentTimeAfterReset = clock.CurrentTime();
 
         // Assert
         Assert.AreEqual("00:00:00", currentTimeAfterReset);
     }
+
+
 }

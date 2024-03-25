@@ -36,7 +36,7 @@ public class IdentifiableObjectTest
     [Test]
     public void TestFirstID()
     {
-        Assert.AreEqual("fred", id.FirstID());
+        Assert.That(id.FirstID(), Is.EqualTo("fred"));
     }
 
     [Test]
@@ -44,7 +44,7 @@ public class IdentifiableObjectTest
     {
         IdentifiableObject emptyID = new IdentifiableObject(new string[] {});
 
-        Assert.AreEqual("", emptyID.FirstID());        
+        Assert.That(emptyID.FirstID(), Is.EqualTo(""));        
     }
 
     [Test]

@@ -12,7 +12,7 @@ public class CounterTest
     public void CounterInitializationTest()
     {
         Counter counter = new Counter("Test Counter");
-        Assert.AreEqual(0, counter.Ticks);
+        Assert.That(0, Is.EqualTo(counter.Ticks));
     }
 
     [Test]
@@ -21,7 +21,7 @@ public class CounterTest
         Counter counter = new Counter("Test Counter");
         counter.Increment();
 
-        Assert.AreEqual(1, counter.Ticks);
+        Assert.That(1, Is.EqualTo(counter.Ticks));
     }
 
     [Test]
@@ -33,7 +33,7 @@ public class CounterTest
             counter.Increment();
         } 
 
-        Assert.AreEqual(10, counter.Ticks);
+        Assert.That(10, Is.EqualTo(counter.Ticks));
     }
 
     [Test]
@@ -42,10 +42,10 @@ public class CounterTest
         Counter counter = new Counter("Test Counter");
 
         counter.Increment();
-        Assert.AreEqual(1, counter.Ticks);
+        Assert.That(1, Is.EqualTo(counter.Ticks));
 
         counter.Reset();
-        Assert.AreEqual(0, counter.Ticks);
+        Assert.That(0, Is.EqualTo(counter.Ticks));
 
     }
     

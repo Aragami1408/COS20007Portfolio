@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections;
-
-namespace SwinAdventure;
+﻿namespace SwinAdventure;
 
 public class IdentifiableObject
 {
