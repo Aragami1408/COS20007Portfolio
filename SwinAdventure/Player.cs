@@ -1,6 +1,6 @@
 ﻿namespace SwinAdventure;
 
-public class Player : GameObject
+public class Player : GameObject, IHaveInventory
 {
     private Inventory _inventory;
 
@@ -8,6 +8,7 @@ public class Player : GameObject
     {
         _inventory = new Inventory();
     }
+
 
     public GameObject? Locate(string id)
     {
@@ -29,4 +30,5 @@ public class Player : GameObject
     {
         get { return _inventory; }
     }
+
 }

@@ -37,9 +37,8 @@ public class Inventory
                 return result;
             }
         }
-        
+
         return null;
-        
     }
 
     public Item? Fetch(string id)
