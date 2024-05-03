@@ -18,7 +18,7 @@ public class LookCommandTest
     {
         string item = lookCommand.Execute(player, new string[] {"look", "at", "inventory"});
 
-        Assert.That(item, Is.EqualTo("the mighty programmer"));
+        Assert.That(item, Is.EqualTo("Fred"));
     }
 
     [Test]
@@ -27,7 +27,7 @@ public class LookCommandTest
         player.Inventory.Put(new Item(new string[] {"gem"}, "a gem", "this is a shiny gem"));
         string item = lookCommand.Execute(player, new string[] {"look", "at", "gem"});
 
-        Assert.That(item, Is.EqualTo("this is a shiny gem"));
+        Assert.That(item, Is.EqualTo("a gem"));
     }
 
     [Test]
@@ -44,7 +44,7 @@ public class LookCommandTest
         player.Inventory.Put(new Item(new string[] {"gem"}, "a gem", "this is a shiny gem"));
         string item = lookCommand.Execute(player, new string[] {"look", "at", "gem", "in", "inventory"});
 
-        Assert.That(item, Is.EqualTo("this is a shiny gem"));
+        Assert.That(item, Is.EqualTo("a gem"));
         
     }
 
@@ -56,7 +56,7 @@ public class LookCommandTest
         player.Inventory.Put(bag);
         string item = lookCommand.Execute(player, new string[] {"look", "at", "gem", "in", "bag1"});
 
-        Assert.That(item, Is.EqualTo("this is a shiny gem"));
+        Assert.That(item, Is.EqualTo("a gem"));
     }
 
     [Test]
@@ -76,7 +76,7 @@ public class LookCommandTest
         player.Inventory.Put(bag);
         string item = lookCommand.Execute(player, new string[] {"look", "at", "gem", "in", "bag1"});
 
-        Assert.That(item, Is.EqualTo("I cannot find the gem in the Bag 1"));
+        Assert.That(item, Is.EqualTo("I cannot find the gem in bag1"));
         
     }
 

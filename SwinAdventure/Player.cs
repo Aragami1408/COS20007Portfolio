@@ -18,10 +18,10 @@ public class Player : GameObject, IHaveInventory
     {
         if (AreYou(id))
             return this;
-        else if (Location != null)
-            return Location.Locate(id);
         else if  (Inventory.HasItem(id))
             return Inventory.Fetch(id);
+        else if (Location != null)
+            return Location.Locate(id);
         else 
         {
             return null;
