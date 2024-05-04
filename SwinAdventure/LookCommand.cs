@@ -9,8 +9,6 @@ public class LookCommand : Command
 
     public override string Execute(Player p, string[] text)
     {
-        IHaveInventory? container = null;
-        GameObject? item = null;
 
         if (text.Length != 3 && text.Length != 5) {
             return "I don't know how to look like that";
@@ -44,7 +42,7 @@ public class LookCommand : Command
         if (p.AreYou(thingId))
             return p.Name;
 
-        GameObject item = null;
+        GameObject? item = null;
 
         IHaveInventory? inventory = FetchContainer(p, containerId);
         if (inventory == null)
@@ -69,7 +67,7 @@ public class LookCommand : Command
     private IHaveInventory? FetchContainer(Player p, string containerId)
     {
         
-        IHaveInventory inventory = p.Locate(containerId) as IHaveInventory;
+        IHaveInventory? inventory = p.Locate(containerId) as IHaveInventory;
 
         if (p.AreYou(containerId) || containerId == "")
         {

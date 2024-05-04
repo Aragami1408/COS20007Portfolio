@@ -68,6 +68,13 @@ namespace SwinAdventure
             path3.SetLocation("south_west", loc3);
 
             player.Location = loc1;
+
+            CommandProcessor proc = new CommandProcessor();
+            Command look = new LookCommand();
+            Command move = new MoveCommand();
+
+            proc.AddCommand(look);
+            proc.AddCommand(move);
             
             // Introduction text
             Console.WriteLine("------------------------------");
@@ -80,23 +87,9 @@ namespace SwinAdventure
             {
                 Console.Write("Command -> ");
                 string? playerInput = Console.ReadLine();
-                string[] inputToPass = playerInput.Split(new char[] {  }, StringSplitOptions.RemoveEmptyEntries);
+                string[] inputToPass = playerInput!.Split(new char[] {  }, StringSplitOptions.RemoveEmptyEntries);
                 Console.WriteLine("");
-                foreach (string input in inputToPass)
-                {
-                    if (lookCommand.AreYou(input))
-                    {
-                        Console.WriteLine(lookCommand.Execute(player, inputToPass));
-                    }
-                    else if (moveCommand.AreYou(input))
-                    {
-                        Console.WriteLine(moveCommand.Execute(player, inputToPass));
-                    }
-                    else
-                    {
-                        Console.WriteLine("Wrong command or command not supported yet");
-                    }
-                }
+                Console.WriteLine(proc.Execute(player, inputToPass));
             }
         }
     }
