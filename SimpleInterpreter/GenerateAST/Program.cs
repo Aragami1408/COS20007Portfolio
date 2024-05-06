@@ -17,6 +17,11 @@ public class GenerateAst
       "Literal  : Object value",
       "Unary    : Token op, Expr right"
     }));
+
+    defineAst(outputDir, "Stmt", new List<string>(new string[] {
+      "Expression : Expr expression",
+      "Print      : Expr expression"
+    }));
   }
 
   private static void defineAst(string outputDir, string baseName, List<string> types)
@@ -26,7 +31,7 @@ public class GenerateAst
 
       writer.WriteLine("namespace SimpleInterpreter;");
       writer.WriteLine();
-      writer.WriteLine("using System.Collections.Generic");
+      writer.WriteLine("using System.Collections.Generic;");
       writer.WriteLine();
 
       // abstract class declaration
@@ -78,7 +83,7 @@ public class GenerateAst
       writer.WriteLine();
       foreach (string field in fields)
       {
-        writer.WriteLine("\t\tprivate " + field + ";");
+        writer.WriteLine("\t\tpublic " + field + ";");
       }
 
       writer.WriteLine("\t}");

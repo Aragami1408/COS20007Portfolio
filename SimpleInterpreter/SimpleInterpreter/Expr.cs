@@ -1,6 +1,6 @@
 namespace SimpleInterpreter;
 
-using System.Collections.Generic
+using System.Collections.Generic;
 
 public abstract class Expr
 {
@@ -25,9 +25,9 @@ public abstract class Expr
 			return visitor.visitBinaryExpr(this);
 		}
 
-		private Expr left;
-		private Token op;
-		private Expr right;
+		public Expr left;
+		public Token op;
+		public Expr right;
 	}
 	public class Grouping : Expr
 	{
@@ -41,7 +41,7 @@ public abstract class Expr
 			return visitor.visitGroupingExpr(this);
 		}
 
-		private Expr expression;
+		public Expr expression;
 	}
 	public class Literal : Expr
 	{
@@ -55,7 +55,7 @@ public abstract class Expr
 			return visitor.visitLiteralExpr(this);
 		}
 
-		private Object value;
+		public Object value;
 	}
 	public class Unary : Expr
 	{
@@ -70,8 +70,8 @@ public abstract class Expr
 			return visitor.visitUnaryExpr(this);
 		}
 
-		private Token op;
-		private Expr right;
+		public Token op;
+		public Expr right;
 	}
 
 	public abstract R accept<R>(Visitor<R> visitor);

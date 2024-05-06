@@ -2,7 +2,10 @@
 
 public class Program 
 {
-  static bool hadError = false;
+  public static bool hadError = false;
+  public static bool hadRuntimeError = false;
+  private static Interpreter interpreter = Interpreter.getInstance();
+
   static void Main(string[] args)
   {
     if (args.Length > 1) 
@@ -26,6 +29,7 @@ public class Program
     run(sr.ReadToEnd());
 
     if (hadError) System.Environment.Exit(65);
+    if (hadRuntimeError) System.Environment.Exit(70);
   }
 
   static void runPrompt()
@@ -43,11 +47,13 @@ public class Program
   {
     Scanner scanner = new Scanner(source);
     List<Token> tokens = scanner.scanTokens();
+    Parser parser = new Parser(tokens);
+    Expr expression = parser.parse();
 
-    foreach (Token token in tokens)
-    {
-      Console.WriteLine(token);
-    }
+    if (hadError) return;
+
+    Console.WriteLine(new ASTPrinter().print(expression));
+    interpreter.interpret(expression);
   }
 
   public static void error(int line, string message)
@@ -55,9 +61,25 @@ public class Program
     report(line, "", message);
   }
 
+  public static void runtimeError(RuntimeError error)
+  {
+    Console.Error.WriteLine(error.Message + "\n[line " + error.token.Line + "]");
+    hadRuntimeError = true;
+  }
+
   public static void report(int line, string where, string message)
   {
     Console.Error.WriteLine("[line " + line + "] Error" + where + ": " + message);
     hadError = true;
+  }
+
+  public static void error(Token token, string message)
+  {
+    if (token.Type == TokenType.EOF) {
+      report(token.Line, " at end", message);
+    } else {
+      report(token.Line, " at '" + token.Lexeme + "'", message);
+    }
+
   }
 }

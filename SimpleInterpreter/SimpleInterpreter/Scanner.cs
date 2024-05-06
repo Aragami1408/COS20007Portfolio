@@ -51,6 +51,8 @@ public class Scanner
       Start = Current;
       scanToken();
     }
+
+    Tokens.Add(new Token(TokenType.EOF,"", null, Line));
     return Tokens;
   }
 
