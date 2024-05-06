@@ -133,12 +133,6 @@ public class Scanner
       case '"':
                 str();
                 break;
-
-      case 'o':
-                if (match('r'))
-                  addToken(TokenType.OR);
-                break;
-
       default:
                 if (isDigit(c))
                   number();
@@ -155,8 +149,12 @@ public class Scanner
   private void identifier()
   {
     while (isAlphaNumeric(peek())) advance();
-    String text = Source.Substring(Start, Current);
-    TokenType type = Keywords[text];
+    String text = Source.Substring(Start, Current-Start);
+    TokenType type;
+    if (Keywords.ContainsKey(text))
+      type = Keywords[text];
+    else
+      type = TokenType.IDENTIFIER;
     addToken(type);
   }
 
@@ -171,7 +169,7 @@ public class Scanner
       while (isDigit(peek())) advance();
     }
 
-    addToken(TokenType.NUMBER, Double.Parse(Source.Substring(Start, Current)));
+    addToken(TokenType.NUMBER, Double.Parse(Source.Substring(Start, Current - Start)));
   }
 
   private void str()
@@ -190,7 +188,7 @@ public class Scanner
 
     advance();
 
-    string value = Source.Substring(Start + 1, Current - 1);
+    string value = Source.Substring(Start + 1, (Current - Start) - 2);
     addToken(TokenType.STRING, value);
   }
 
@@ -212,7 +210,7 @@ public class Scanner
 
   private void addToken(TokenType type, dynamic? literal)
   {
-    string text = Source.Substring(Start, Current);
+    string text = Source.Substring(Start, Current-Start);
     Tokens.Add(new Token(type, text, literal, Line));
   }
 

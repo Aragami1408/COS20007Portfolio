@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleInterpreter", "SimpleInterpreter\SimpleInterpreter.csproj", "{E54F0098-5561-4176-A56F-40380090EFB5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenerateAST", "GenerateAST\GenerateAST.csproj", "{C4CA9295-690A-49F7-9C5C-417D85EA0AD2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{E54F0098-5561-4176-A56F-40380090EFB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E54F0098-5561-4176-A56F-40380090EFB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E54F0098-5561-4176-A56F-40380090EFB5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4CA9295-690A-49F7-9C5C-417D85EA0AD2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4CA9295-690A-49F7-9C5C-417D85EA0AD2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4CA9295-690A-49F7-9C5C-417D85EA0AD2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4CA9295-690A-49F7-9C5C-417D85EA0AD2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
