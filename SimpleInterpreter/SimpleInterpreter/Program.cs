@@ -36,6 +36,7 @@ public class Program
   {
     for (;;)
     {
+      hadError = false;
       Console.Write("> ");
       string? line = Console.ReadLine();
       if (line == null) break;
