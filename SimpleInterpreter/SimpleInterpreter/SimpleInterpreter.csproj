@@ -5,6 +5,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <NoWarn>8603,0168,8618,8600,8604,8625,8602,8618</NoWarn>
   </PropertyGroup>
 
 </Project>

@@ -2,7 +2,11 @@
 
 public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
 {
-  private Interpreter() {}
+  private Environment environment;
+  private Interpreter() 
+  {
+    environment = new Environment();
+  }
   private static Interpreter _instance;
 
   public static Interpreter getInstance()
@@ -11,6 +15,7 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
       _instance = new Interpreter();
     return _instance;
   }
+
 
   public void interpret(List<Stmt> statements)
   {
@@ -47,6 +52,25 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
   {
     object value = evaluate(stmt.expression);
     Console.WriteLine(stringify(value));
+    return null;
+  }
+
+  public object visitVarStmt(Stmt.Var stmt)
+  {
+    object value = null;
+    if (stmt.initializer != null)
+    {
+      value = evaluate(stmt.initializer);
+    }
+
+    environment.define(stmt.name.Lexeme, value);
+    return null;
+  }
+
+  public object visitAssignExpr(Expr.Assign expr)
+  {
+    object value = evaluate(expr.value);
+    environment.assign(expr.name, value);
     return null;
   }
 
@@ -124,6 +148,11 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
     }
 
     return null;
+  }
+
+  public object visitVariableExpr(Expr.Variable expr)
+  {
+    return environment.get(expr.name);
   }
 
   private string stringify(object obj)

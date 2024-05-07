@@ -12,15 +12,18 @@ public class GenerateAst
 
     string outputDir = args[0];
     defineAst(outputDir, "Expr", new List<string>(new string[] {
+      "Assign   : Token name, Expr value",
       "Binary   : Expr left, Token op, Expr right",
       "Grouping : Expr expression",
       "Literal  : Object value",
-      "Unary    : Token op, Expr right"
+      "Unary    : Token op, Expr right",
+      "Variable : Token name"
     }));
 
     defineAst(outputDir, "Stmt", new List<string>(new string[] {
       "Expression : Expr expression",
-      "Print      : Expr expression"
+      "Print      : Expr expression",
+      "Var        : Token name, Expr initializer"
     }));
   }
 
@@ -38,11 +41,13 @@ public class GenerateAst
       writer.WriteLine("public abstract class " + baseName);
       writer.WriteLine("{");
       defineVisitor(writer, baseName, types);
+      writer.WriteLine();
       foreach (string type in types)
       {
         string className = type.Split(":")[0].Trim();
         string fields = type.Split(":")[1].Trim();
         defineType(writer, baseName, className, fields);
+        writer.WriteLine();
       }
 
       // base accept() method

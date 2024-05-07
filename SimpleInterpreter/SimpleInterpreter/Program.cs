@@ -48,12 +48,12 @@ public class Program
     Scanner scanner = new Scanner(source);
     List<Token> tokens = scanner.scanTokens();
     Parser parser = new Parser(tokens);
-    Expr expression = parser.parse();
+    List<Stmt> statements = parser.parse();
 
     if (hadError) return;
 
-    Console.WriteLine(new ASTPrinter().print(expression));
-    interpreter.interpret(expression);
+    // Console.WriteLine(new ASTPrinter().print(expression));
+    interpreter.interpret(statements);
   }
 
   public static void error(int line, string message)
