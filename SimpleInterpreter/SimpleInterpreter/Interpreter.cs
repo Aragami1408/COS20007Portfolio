@@ -89,6 +89,16 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
     return null;
   }
 
+  public object visitIfStmt(Stmt.If stmt)
+  {
+    if (isTruthy(evaluate(stmt.condition)))
+      execute(stmt.thenBranch);
+    else if (stmt.elseBranch != null)
+      execute(stmt.elseBranch);
+
+    return null;
+  }
+
   public object visitAssignExpr(Expr.Assign expr)
   {
     object value = evaluate(expr.value);
@@ -154,6 +164,24 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
   public object visitLiteralExpr(Expr.Literal expr)
   {
     return expr.value;
+  }
+
+  public object visitLogicalExpr(Expr.Logical expr)
+  {
+    object left = evaluate(expr.left);
+    
+    if (expr.op.type == TokenType.OR)
+    {
+      if (isTruthy(left))
+        return left;
+    }
+    else
+    {
+      if (!isTruthy(left))
+        return left;
+    }
+
+    return evaluate(expr.right);
   }
 
   public object visitUnaryExpr(Expr.Unary expr)
