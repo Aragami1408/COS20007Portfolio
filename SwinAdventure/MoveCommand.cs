@@ -58,6 +58,6 @@ public class MoveCommand : Command
             return "path not found";
 
         p.Location = loc;
-        return p.Location.Name;
+        return p.Location.FullDescription;
     }
 }

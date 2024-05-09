@@ -9,7 +9,7 @@ public class CommandProcessorTest
         Command look = new LookCommand();
         CommandProcessor proc = new CommandProcessor();
         proc.AddCommand(look);
-        Assert.That(proc.Execute(player, new string[3] {"look", "at", "me"}), Is.EqualTo(player.Name));
+        Assert.That(proc.Execute(player, new string[3] {"look", "at", "me"}), Is.EqualTo(player.FullDescription));
     }
 
     [Test]
@@ -44,8 +44,8 @@ public class CommandProcessorTest
 
         proc.AddCommand(move);
 
-        Assert.That(proc.Execute(player, new string[] {"move", "to", "west"}), Is.EqualTo(loc2.Name));
-        Assert.That(proc.Execute(player, new string[] {"move", "to", "north_east"}), Is.EqualTo(loc3.Name));
+        Assert.That(proc.Execute(player, new string[] {"move", "to", "west"}), Is.EqualTo(loc2.FullDescription));
+        Assert.That(proc.Execute(player, new string[] {"move", "to", "north_east"}), Is.EqualTo(loc3.FullDescription));
     }
 
     [Test]
@@ -82,9 +82,9 @@ public class CommandProcessorTest
         proc.AddCommand(look);
         proc.AddCommand(move);
  
-        Assert.That(proc.Execute(player, new string[3] {"look", "at", "me"}), Is.EqualTo(player.Name));
-        Assert.That(proc.Execute(player, new string[] {"move", "to", "west"}), Is.EqualTo(loc2.Name));
-        Assert.That(proc.Execute(player, new string[] {"move", "to", "north_east"}), Is.EqualTo(loc3.Name));
+        Assert.That(proc.Execute(player, new string[3] {"look", "at", "me"}), Is.EqualTo(player.FullDescription));
+        Assert.That(proc.Execute(player, new string[] {"move", "to", "west"}), Is.EqualTo(loc2.FullDescription));
+        Assert.That(proc.Execute(player, new string[] {"move", "to", "north_east"}), Is.EqualTo(loc3.FullDescription));
     }
 
 }

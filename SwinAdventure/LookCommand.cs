@@ -2,80 +2,85 @@
 
 public class LookCommand : Command
 {
-    public LookCommand() : base(new string[] {"look"})
-    {
+  public LookCommand() : base(new string[] {"look"})
+  {
 
+  }
+
+  public override string Execute(Player p, string[] text)
+  {
+    if (text.Length == 1 && text[0] == "look")
+    {
+      return "You are in the " + p.Location.Name 
+        + "\nThis is the " + p.Location.FullDescription
+        + "\nIn this location, you can see:" + p.Location.Inventory.ItemList;  
+    }
+    if (text.Length != 3 && text.Length != 5) {
+      return "I don't know how to look like that";
     }
 
-    public override string Execute(Player p, string[] text)
-    {
-
-        if (text.Length != 3 && text.Length != 5) {
-            return "I don't know how to look like that";
-        }
-
-        if (text[0] != "look") {
-            return "Error in look input";
-        }
-        
-        if (text[1] != "at") {
-            return "What do you want to look at?";
-        }
-
-        if (text.Length == 5 && text[3] != "in")
-        {
-            return "What do you want to look in?";
-        }
-        else if (text.Length == 5)
-        {
-            return LookAtIn(p, text[2], text[4]);
-        }
-        else
-        {
-            return LookAtIn(p, text[2], "");
-        }
-
+    if (text[0] != "look") {
+      return "Error in look input";
     }
 
-    private string LookAtIn(Player p, string thingId, string containerId)
-    {
-        if (p.AreYou(thingId))
-            return p.Name;
-
-        GameObject? item = null;
-
-        IHaveInventory? inventory = FetchContainer(p, containerId);
-        if (inventory == null)
-            return "I cannot find the " + containerId;
-        
-        item = inventory.Locate(thingId);
-        if (item == null)
-        {
-            if (containerId == null || containerId == "")
-            {
-                return "I cannot find the " + thingId;
-            }
-            else
-            {
-                return "I cannot find the " + thingId + " in " + containerId; 
-            }
-        }
-
-        return item.Name;
+    if (text[1] != "at") {
+      return "What do you want to look at?";
     }
 
-    private IHaveInventory? FetchContainer(Player p, string containerId)
+    if (text.Length == 5 && text[3] != "in")
     {
-        
-        IHaveInventory? inventory = p.Locate(containerId) as IHaveInventory;
-
-        if (p.AreYou(containerId) || containerId == "")
-        {
-            inventory = (IHaveInventory) p;
-        }
-
-        return inventory;
-
+      return "What do you want to look in?";
     }
+    else if (text.Length == 5)
+    {
+      return LookAtIn(p, text[2], text[4]);
+    }
+    else
+    {
+      return LookAtIn(p, text[2], "");
+    }
+
+  }
+
+  private string LookAtIn(Player p, string thingId, string containerId)
+  {
+    if (p.AreYou(thingId))
+      return p.FullDescription;
+
+    GameObject? item = null;
+
+    IHaveInventory? inventory = FetchContainer(p, containerId);
+    if (inventory == null)
+      return "I cannot find the " + containerId;
+
+    item = inventory.Locate(thingId);
+    if (item == null)
+    {
+      if (containerId == null || containerId == "")
+      {
+        return "I cannot find the " + thingId;
+      }
+      else
+      {
+        return "I cannot find the " + thingId + " in " + containerId; 
+      }
+    }
+
+    return item.FullDescription;
+  }
+
+  private IHaveInventory? FetchContainer(Player p, string containerId)
+  {
+
+    IHaveInventory? inventory = p.Locate(containerId) as IHaveInventory;
+
+    if (p.AreYou(containerId) || containerId == "")
+    {
+      inventory = (IHaveInventory) p;
+    }
+
+    return inventory;
+
+  }
 
 }

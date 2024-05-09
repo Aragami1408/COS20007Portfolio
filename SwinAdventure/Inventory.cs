@@ -55,7 +55,8 @@ public class Inventory
     public string ItemList
     {
         get { 
-            StringBuilder sb = new StringBuilder("You are carrying\n"); 
+            StringBuilder sb = new StringBuilder(""); 
+            sb.Append("\n");
             foreach (var item in _items)
             {
                 sb.Append("    "); // Or use "\t" if your editor uses tabs

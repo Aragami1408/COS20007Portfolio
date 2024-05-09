@@ -30,7 +30,7 @@ public class Player : GameObject, IHaveInventory
 
     public override string FullDescription
     {
-        get { return String.Format("You are {0} {1}.\n{2}", Name, Description, Inventory.ItemList); }
+        get { return String.Format("You are {0} ({1}).\nYou are carrying:{2}", Name, Description, Inventory.ItemList); }
     }
 
     public Inventory Inventory
