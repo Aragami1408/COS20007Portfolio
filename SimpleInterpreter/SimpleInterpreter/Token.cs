@@ -22,45 +22,21 @@ public enum TokenType
 
 public class Token
 {
-  private TokenType _type;
-  private string _lexeme;
-  private dynamic _literal;
-  private int _line;
+  public TokenType type;
+  public string lexeme;
+  public dynamic literal;
+  public int line;
 
   public Token(TokenType type, string lexeme, dynamic literal, int line)
   {
-    _type = type;
-    _lexeme = lexeme;
-    _literal = literal;
-    _line = line;
-  }
-
-  public TokenType Type
-  {
-    get { return _type; }
-    set { _type = value; }
-  }
-
-  public string Lexeme
-  {
-    get { return _lexeme; }
-    set { _lexeme = value; }
-  }
-
-  public dynamic Literal
-  {
-    get { return _literal; }
-    set { _literal = value; }
-  }
-
-  public int Line
-  {
-    get { return _line; }
-    set { _line = value; }
+    this.type = type;
+    this.lexeme = lexeme;
+    this.literal = literal;
+    this.line = line;
   }
 
   public override string? ToString()
   {
-    return Type + " " + Lexeme + " " + Literal;
+    return type + " " + lexeme + " " + literal;
   }
 }

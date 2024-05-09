@@ -2,11 +2,19 @@
 
 public class Environment
 {
-  private Dictionary<string, object> values;
+  private Environment enclosing;
+  public Dictionary<string, object> values;
 
   public Environment()
   {
+    enclosing = null;
     values = new Dictionary<string, object>(); 
+  }
+
+  public Environment(Environment enclosing)
+  {
+    this.enclosing = enclosing;
+    values = new Dictionary<string, object>();  
   }
 
   public void define(string name, object value)
@@ -16,22 +24,31 @@ public class Environment
 
   public object get(Token name)
   {
-    if (values.ContainsKey(name.Lexeme))
+    if (values.ContainsKey(name.lexeme))
     {
-      return values[name.Lexeme];
+      return values[name.lexeme];
     }
 
-    throw new RuntimeError(name, "Undefined variable '" + name.Lexeme + "'.");
+    if (enclosing != null) 
+      return enclosing.get(name);
+
+    throw new RuntimeError(name, "Undefined variable '" + name.lexeme + "'.");
   }
 
   public void assign(Token name, object value)
   {
-    if (values.ContainsKey(name.Lexeme))
+    if (values.ContainsKey(name.lexeme))
     {
-      values[name.Lexeme] = value;
+      values[name.lexeme] = value;
       return;
     }
 
-    throw new RuntimeError(name, "Undefined variable '"  + name.Lexeme + "'.");
+    if (enclosing != null) 
+    {
+      enclosing.assign(name, value);
+      return;
+    }
+
+    throw new RuntimeError(name, "Undefined variable '"  + name.lexeme + "'.");
   }
 }

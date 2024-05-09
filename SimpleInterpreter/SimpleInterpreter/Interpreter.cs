@@ -16,7 +16,6 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
     return _instance;
   }
 
-
   public void interpret(List<Stmt> statements)
   {
     try
@@ -42,6 +41,23 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
     stmt.accept(this);
   }
 
+  private void executeBlock(List<Stmt> statements, Environment environment)
+  {
+    Environment previous = this.environment;
+
+    try
+    {
+      this.environment = environment;
+
+      foreach (Stmt statement in statements)
+        execute(statement);
+    }
+    finally
+    {
+      this.environment = previous;
+    }
+  }
+
   public object visitExpressionStmt(Stmt.Expression stmt)
   {
     evaluate(stmt.expression);
@@ -63,7 +79,13 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
       value = evaluate(stmt.initializer);
     }
 
-    environment.define(stmt.name.Lexeme, value);
+    environment.define(stmt.name.lexeme, value);
+    return null;
+  }
+
+  public object visitBlockStmt(Stmt.Block stmt)
+  {
+    executeBlock(stmt.statements, new Environment(environment));
     return null;
   }
 
@@ -79,7 +101,7 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
     object left = evaluate(expr.left);
     object right = evaluate(expr.right);
 
-    switch (expr.op.Type)
+    switch (expr.op.type)
     {
       case TokenType.GREATER:
         checkNumberOperands(expr.op, left, right);
@@ -138,7 +160,7 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
   {
     object right = evaluate(expr.right);
 
-    switch (expr.op.Type)
+    switch (expr.op.type)
     {
       case TokenType.BANG:
         return !isTruthy(right);

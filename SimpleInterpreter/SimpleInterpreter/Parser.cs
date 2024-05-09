@@ -52,6 +52,8 @@ public class Parser
   private Stmt statement()
   {
     if (match(TokenType.PRINT)) return printStatement();
+    if (match(TokenType.LEFT_BRACE)) return new Stmt.Block(block());
+
     return expressionStatement();
   }
 
@@ -67,6 +69,17 @@ public class Parser
     Expr expr = expression();
     consume(TokenType.SEMICOLON, "Expect ';' after expression");
     return new Stmt.Expression(expr); 
+  }
+
+  private List<Stmt> block()
+  {
+    List<Stmt> statements = new List<Stmt>();
+
+    while (!check(TokenType.RIGHT_BRACE) && !isAtEnd())
+      statements.Add(declaration());
+
+    consume(TokenType.RIGHT_BRACE, "Expect '}' after block");
+    return statements;
   }
 
 
@@ -171,7 +184,7 @@ public class Parser
     if (match(TokenType.NIL)) return new Expr.Literal(null);
 
     if (match(TokenType.NUMBER, TokenType.STRING))
-      return new Expr.Literal(previous().Literal);
+      return new Expr.Literal(previous().literal);
 
     if (match(TokenType.IDENTIFIER))
       return new Expr.Variable(previous());
@@ -210,7 +223,7 @@ public class Parser
   private bool check(TokenType type)
   {
     if (isAtEnd()) return false;
-    return peek().Type == type;
+    return peek().type == type;
   }
 
   private Token advance()
@@ -221,7 +234,7 @@ public class Parser
 
   private bool isAtEnd()
   {
-    return peek().Type == TokenType.EOF;
+    return peek().type == TokenType.EOF;
   }
 
   private Token peek()
@@ -246,9 +259,9 @@ public class Parser
 
     while (!isAtEnd())
     {
-      if (previous().Type == TokenType.SEMICOLON) return;
+      if (previous().type == TokenType.SEMICOLON) return;
 
-      switch (peek().Type)
+      switch (peek().type)
       {
         case TokenType.CLASS:
         case TokenType.FUN:

@@ -53,7 +53,6 @@ public class Program
 
     if (hadError) return;
 
-    // Console.WriteLine(new ASTPrinter().print(expression));
     interpreter.interpret(statements);
   }
 
@@ -64,7 +63,7 @@ public class Program
 
   public static void runtimeError(RuntimeError error)
   {
-    Console.Error.WriteLine(error.Message + "\n[line " + error.token.Line + "]");
+    Console.Error.WriteLine(error.Message + "\n[line " + error.token.line + "]");
     hadRuntimeError = true;
   }
 
@@ -76,10 +75,10 @@ public class Program
 
   public static void error(Token token, string message)
   {
-    if (token.Type == TokenType.EOF) {
-      report(token.Line, " at end", message);
+    if (token.type == TokenType.EOF) {
+      report(token.line, " at end", message);
     } else {
-      report(token.Line, " at '" + token.Lexeme + "'", message);
+      report(token.line, " at '" + token.lexeme + "'", message);
     }
 
   }
