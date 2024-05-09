@@ -6,7 +6,7 @@ public class GenerateAst
   {
     if (args.Length != 1) 
     {
-      Console.Error.WriteLine("Usage: dotnet run <output dir>");
+      Console.Error.WriteLine("Usage: GenerateAST <output dir>");
       System.Environment.Exit(1); 
     }
 
@@ -16,12 +16,14 @@ public class GenerateAst
       "Binary   : Expr left, Token op, Expr right",
       "Grouping : Expr expression",
       "Literal  : Object value",
+      "Logical  : Expr left, Token op, Expr right",
       "Unary    : Token op, Expr right",
       "Variable : Token name"
     }));
 
     defineAst(outputDir, "Stmt", new List<string>(new string[] {
       "Block      : List<Stmt> statements",
+      "If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
       "Expression : Expr expression",
       "Print      : Expr expression",
       "Var        : Token name, Expr initializer"
