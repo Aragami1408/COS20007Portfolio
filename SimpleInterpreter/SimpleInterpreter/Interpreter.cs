@@ -2,10 +2,16 @@
 
 public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
 {
-  private Environment environment;
+  public Environment globals;
+  public Environment environment;
+
   private Interpreter() 
   {
-    environment = new Environment();
+    globals = new Environment();
+    environment = globals;
+
+    ClockFunc clockFunc = new ClockFunc();
+    globals.define("clock", clockFunc);
   }
   private static Interpreter _instance;
 
@@ -41,7 +47,7 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
     stmt.accept(this);
   }
 
-  private void executeBlock(List<Stmt> statements, Environment environment)
+  public void executeBlock(List<Stmt> statements, Environment environment)
   {
     Environment previous = this.environment;
 
@@ -71,6 +77,14 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
     return null;
   }
 
+  public object visitReturnStmt(Stmt.Return stmt)
+  {
+    object value = null;
+    if (stmt.value != null) value = evaluate(stmt.value);
+
+    throw new SimpReturn(value);
+  }
+
   public object visitVarStmt(Stmt.Var stmt)
   {
     object value = null;
@@ -80,6 +94,13 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
     }
 
     environment.define(stmt.name.lexeme, value);
+    return null;
+  }
+
+  public object visitFunctionStmt(Stmt.Function stmt)
+  {
+    SimpFunction function = new SimpFunction(stmt);
+    environment.define(stmt.name.lexeme, function);
     return null;
   }
 
@@ -96,6 +117,15 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
     else if (stmt.elseBranch != null)
       execute(stmt.elseBranch);
 
+    return null;
+  }
+
+  public object visitWhileStmt(Stmt.While stmt)
+  {
+    while (isTruthy(evaluate(stmt.condition)))
+    {
+      execute(stmt.body);
+    }
     return null;
   }
 
@@ -154,6 +184,33 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
     }
 
     return null;
+  }
+
+  public object visitCallExpr(Expr.Call expr)
+  {
+    object callee = evaluate(expr.callee);
+
+    List<object> arguments = new List<object>();
+    foreach (Expr argument in expr.arguments)
+    {
+      arguments.Add(evaluate(argument));
+    }
+
+    if (!(callee is ICallable))
+    {
+      throw new RuntimeError(expr.paren, "Can only call functions and classes.");
+    }
+
+    ICallable function = (ICallable)callee;
+    if (arguments.Count != function.Arity())
+    {
+      throw new RuntimeError(expr.paren, 
+          "Expected " 
+          + function.Arity()
+          + " arguments but got " 
+          + arguments.Count + ".");
+    }
+    return function.call(this, arguments);
   }
 
   public object visitGroupingExpr(Expr.Grouping expr)
