@@ -4,9 +4,11 @@ namespace SimpleInterpreter;
 public class SimpFunction : ICallable
 {
     private Stmt.Function declaration;
+    private Environment closure;
 
-    public SimpFunction(Stmt.Function declaration)
+    public SimpFunction(Stmt.Function declaration, Environment closure)
     {
+	this.closure = closure;
 	this.declaration = declaration;
     }
 
@@ -17,7 +19,7 @@ public class SimpFunction : ICallable
 
     public object call(Interpreter interpreter, List<object> arguments)
     {
-	Environment environment = new Environment(interpreter.globals);
+	Environment environment = new Environment(closure);
 	for (int i = 0; i < declaration.parameters.Count; i++)
 	{
 	    environment.define(declaration.parameters[i].lexeme, arguments[i]);

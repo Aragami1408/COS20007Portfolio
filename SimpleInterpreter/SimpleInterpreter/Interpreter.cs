@@ -99,7 +99,7 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
 
   public object visitFunctionStmt(Stmt.Function stmt)
   {
-    SimpFunction function = new SimpFunction(stmt);
+    SimpFunction function = new SimpFunction(stmt, environment);
     environment.define(stmt.name.lexeme, function);
     return null;
   }
