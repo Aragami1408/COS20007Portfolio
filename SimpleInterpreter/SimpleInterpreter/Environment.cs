@@ -22,6 +22,25 @@ public class Environment
     values.Add(name, value); 
   }
 
+  public Environment ancestor(int? distance)
+  {
+    Environment environment = this;
+    for (int i = 0; i < distance; i++)
+      environment = environment.enclosing;
+
+    return environment;
+  }
+
+  public object getAt(int? distance, string name)
+  {
+    return ancestor(distance).values[name];
+  }
+
+  public void assignAt(int? distance, Token name, object value)
+  {
+    ancestor(distance).values.Add(name.lexeme, value);
+  }
+
   public object get(Token name)
   {
     if (values.ContainsKey(name.lexeme))

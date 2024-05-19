@@ -4,11 +4,13 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
 {
   public Environment globals;
   public Environment environment;
+  private Dictionary<Expr, int?> locals;
 
   private Interpreter() 
   {
     globals = new Environment();
     environment = globals;
+    locals = new Dictionary<Expr, int?>();
 
     ClockFunc clockFunc = new ClockFunc();
     globals.define("clock", clockFunc);
@@ -47,6 +49,11 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
     stmt.accept(this);
   }
 
+  public void resolve(Expr expr, int depth)
+  {
+    locals.Add(expr, depth);
+  }
+
   public void executeBlock(List<Stmt> statements, Environment environment)
   {
     Environment previous = this.environment;
@@ -67,6 +74,7 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
   public object visitExpressionStmt(Stmt.Expression stmt)
   {
     evaluate(stmt.expression);
+
     return null;
   }
 
@@ -74,6 +82,7 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
   {
     object value = evaluate(stmt.expression);
     Console.WriteLine(stringify(value));
+
     return null;
   }
 
@@ -132,8 +141,16 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
   public object visitAssignExpr(Expr.Assign expr)
   {
     object value = evaluate(expr.value);
-    environment.assign(expr.name, value);
-    return null;
+    if (locals.TryGetValue(expr, out int? distance))
+    {
+      environment.assignAt(distance, expr.name, value);
+    }
+    else
+    {
+        globals.assign(expr.name, value);
+    }
+
+    return value;
   }
 
   public object visitBinaryExpr(Expr.Binary expr)
@@ -210,6 +227,7 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
           + " arguments but got " 
           + arguments.Count + ".");
     }
+
     return function.call(this, arguments);
   }
 
@@ -259,7 +277,19 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
 
   public object visitVariableExpr(Expr.Variable expr)
   {
-    return environment.get(expr.name);
+    return lookUpVariable(expr.name, expr);
+  }
+
+  private object lookUpVariable(Token name, Expr expr)
+  {
+    if (locals.TryGetValue(expr, out int? distance))
+    {
+      return environment.getAt(distance, name.lexeme);
+    }
+    else
+    {
+      return globals.get(name);
+    }
   }
 
   private string stringify(object obj)
