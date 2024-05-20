@@ -1,0 +1,5 @@
+fun greet() {
+  print("Hello darkness my old friend");
+}
+
+greet();

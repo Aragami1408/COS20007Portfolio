@@ -1,0 +1,11 @@
+fun fib(n) {
+  if (n < 2) return n;
+  return fib(n - 1) + fib(n - 2); 
+}
+
+var before = clock();
+
+var fib_input = 15;
+print "fib(" + fib_input + ") = " + fib(fib_input);
+var after = clock();
+print "Time elapsed: " + (after - before) + " sec";
