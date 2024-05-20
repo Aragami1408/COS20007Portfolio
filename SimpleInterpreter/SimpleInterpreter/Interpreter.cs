@@ -2,19 +2,20 @@
 
 public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
 {
-  public Environment globals;
-  public Environment environment;
-  private Dictionary<Expr, int?> locals;
+  public Environment _globals;
+
+  public Environment _environment;
+  private readonly Dictionary<Expr, int> _locals = new Dictionary<Expr, int>();
 
   private Interpreter() 
   {
-    globals = new Environment();
-    environment = globals;
-    locals = new Dictionary<Expr, int?>();
+    _globals = new Environment();
+    this._environment = _globals;
 
     ClockFunc clockFunc = new ClockFunc();
-    globals.define("clock", clockFunc);
+    _globals.define("clock", clockFunc);
   }
+
   private static Interpreter _instance;
 
   public static Interpreter getInstance()
@@ -39,9 +40,9 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
     }
   }
 
-  private object evaluate(Expr expr)
+  public void resolve(Expr expr, int depth)
   {
-    return expr.accept(this);
+    _locals.Add(expr, depth);
   }
 
   private void execute(Stmt stmt)
@@ -49,105 +50,17 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
     stmt.accept(this);
   }
 
-  public void resolve(Expr expr, int depth)
-  {
-    locals.Add(expr, depth);
-  }
-
-  public void executeBlock(List<Stmt> statements, Environment environment)
-  {
-    Environment previous = this.environment;
-
-    try
-    {
-      this.environment = environment;
-
-      foreach (Stmt statement in statements)
-        execute(statement);
-    }
-    finally
-    {
-      this.environment = previous;
-    }
-  }
-
-  public object visitExpressionStmt(Stmt.Expression stmt)
-  {
-    evaluate(stmt.expression);
-
-    return null;
-  }
-
-  public object visitPrintStmt(Stmt.Print stmt)
-  {
-    object value = evaluate(stmt.expression);
-    Console.WriteLine(stringify(value));
-
-    return null;
-  }
-
-  public object visitReturnStmt(Stmt.Return stmt)
-  {
-    object value = null;
-    if (stmt.value != null) value = evaluate(stmt.value);
-
-    throw new SimpReturn(value);
-  }
-
-  public object visitVarStmt(Stmt.Var stmt)
-  {
-    object value = null;
-    if (stmt.initializer != null)
-    {
-      value = evaluate(stmt.initializer);
-    }
-
-    environment.define(stmt.name.lexeme, value);
-    return null;
-  }
-
-  public object visitFunctionStmt(Stmt.Function stmt)
-  {
-    SimpFunction function = new SimpFunction(stmt, environment);
-    environment.define(stmt.name.lexeme, function);
-    return null;
-  }
-
-  public object visitBlockStmt(Stmt.Block stmt)
-  {
-    executeBlock(stmt.statements, new Environment(environment));
-    return null;
-  }
-
-  public object visitIfStmt(Stmt.If stmt)
-  {
-    if (isTruthy(evaluate(stmt.condition)))
-      execute(stmt.thenBranch);
-    else if (stmt.elseBranch != null)
-      execute(stmt.elseBranch);
-
-    return null;
-  }
-
-  public object visitWhileStmt(Stmt.While stmt)
-  {
-    while (isTruthy(evaluate(stmt.condition)))
-    {
-      execute(stmt.body);
-    }
-    return null;
-  }
-
   public object visitAssignExpr(Expr.Assign expr)
   {
     object value = evaluate(expr.value);
-    if (locals.TryGetValue(expr, out int? distance))
+
+    if (_locals.TryGetValue(expr, out int distance))
     {
-      environment.assignAt(distance, expr.name, value);
+      _environment.assignAt(distance, expr.name, value);
     }
     else
     {
-        globals.assign(expr.name, value);
+      _globals.assign(expr.name, value);
     }
 
     return value;
@@ -188,6 +101,10 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
           return (double)left + (double)right;
         if (left is string && right is string)
           return (string)left + (string)right;	
+        if (left is string && right is double)
+          return (string)left + stringify(right);
+        if (left is double && right is string)
+          return stringify(left) + (string)right;
         throw new RuntimeError(expr.op, "Operands must be two numbers or two strings");
       case TokenType.MINUS:
         checkNumberOperands(expr.op, left, right);
@@ -231,6 +148,17 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
     return function.call(this, arguments);
   }
 
+  public object visitGetExpr(Expr.Get expr)
+  {
+    object obj = evaluate(expr.obj);
+    if (obj is SimpInstance)
+    {
+      return ((SimpInstance) obj).get(expr.name);
+    }
+
+    throw new RuntimeError(expr.name, "Only instances have properties");
+  }
+
   public object visitGroupingExpr(Expr.Grouping expr)
   {
     return evaluate(expr.expression);
@@ -259,6 +187,133 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
     return evaluate(expr.right);
   }
 
+  public object visitSetExpr(Expr.Set expr)
+  {
+    object obj = evaluate(expr.obj);
+
+    if (!(obj is SimpInstance))
+      throw new RuntimeError(expr.name, "Only instances have fields");
+
+    object value = evaluate(expr.value);
+    ((SimpInstance) obj).set(expr.name, value);
+
+    return value;
+  }
+
+  public object visitThisExpr(Expr.This expr)
+  {
+    return lookUpVariable(expr.keyword, expr);
+  }
+
+  public object visitVariableExpr(Expr.Variable expr)
+  {
+    return lookUpVariable(expr.name, expr);
+  }
+
+  public void executeBlock(List<Stmt> statements, Environment env)
+  {
+    Environment previous = this._environment;
+
+    try
+    {
+      this._environment = env;
+
+      foreach (Stmt statement in statements)
+        execute(statement);
+    }
+    finally
+    {
+      this._environment = previous;
+    }
+  }
+
+  public object visitExpressionStmt(Stmt.Expression stmt)
+  {
+    evaluate(stmt.expression);
+
+    return null;
+  }
+
+  public object visitPrintStmt(Stmt.Print stmt)
+  {
+    object value = evaluate(stmt.expression);
+    Console.WriteLine(stringify(value));
+
+    return null;
+  }
+
+  public object visitReturnStmt(Stmt.Return stmt)
+  {
+    object value = null;
+
+    if (stmt.value != null) 
+      value = evaluate(stmt.value);
+
+    throw new SimpReturn(value);
+  }
+
+  public object visitVarStmt(Stmt.Var stmt)
+  {
+    object value = null;
+    if (stmt.initializer != null)
+    {
+      value = evaluate(stmt.initializer);
+    }
+
+    _environment.define(stmt.name.lexeme, value);
+    return null;
+  }
+
+  public object visitFunctionStmt(Stmt.Function stmt)
+  {
+    SimpFunction function = new SimpFunction(stmt, _environment);
+    _environment.define(stmt.name.lexeme, function);
+    return null;
+  }
+
+  public object visitBlockStmt(Stmt.Block stmt)
+  {
+    executeBlock(stmt.statements, new Environment(_environment));
+    return null;
+  }
+
+  public object visitClassStmt(Stmt.Class stmt)
+  {
+    _environment.define(stmt.name.lexeme, null);
+
+    Dictionary<string, SimpFunction> methods = new Dictionary<string, SimpFunction>();
+    foreach (Stmt.Function method in stmt.methods)
+    {
+      SimpFunction function = new SimpFunction(method, _environment);
+      methods.Add(method.name.lexeme, function);
+    }
+
+    SimpClass simpClass = new SimpClass(stmt.name.lexeme, methods);
+
+    _environment.assign(stmt.name, simpClass);
+    return null;
+  }
+
+  public object visitIfStmt(Stmt.If stmt)
+  {
+    if (isTruthy(evaluate(stmt.condition)))
+      execute(stmt.thenBranch);
+    else if (stmt.elseBranch != null)
+      execute(stmt.elseBranch);
+
+    return null;
+  }
+
+  public object visitWhileStmt(Stmt.While stmt)
+  {
+    while (isTruthy(evaluate(stmt.condition)))
+    {
+      execute(stmt.body);
+    }
+    return null;
+  }
+
+
   public object visitUnaryExpr(Expr.Unary expr)
   {
     object right = evaluate(expr.right);
@@ -275,21 +330,21 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
     return null;
   }
 
-  public object visitVariableExpr(Expr.Variable expr)
-  {
-    return lookUpVariable(expr.name, expr);
-  }
-
   private object lookUpVariable(Token name, Expr expr)
   {
-    if (locals.TryGetValue(expr, out int? distance))
+    if (_locals.TryGetValue(expr, out int distance))
     {
-      return environment.getAt(distance, name.lexeme);
+      return _environment.getAt(distance, name.lexeme);
     }
     else
     {
-      return globals.get(name);
+      return _globals.get(name);
     }
+  }
+
+  private object evaluate(Expr expr)
+  {
+    return expr.accept(this);
   }
 
   private string stringify(object obj)

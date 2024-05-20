@@ -12,6 +12,13 @@ public class SimpFunction : ICallable
 	this.declaration = declaration;
     }
 
+    public SimpFunction bind(SimpInstance instance)
+    {
+	Environment environment = new Environment(closure);
+	environment.define("this", instance);
+	return new SimpFunction(declaration, environment);
+    }
+
     public int Arity()
     {
 	return declaration.parameters.Count;
@@ -20,6 +27,7 @@ public class SimpFunction : ICallable
     public object call(Interpreter interpreter, List<object> arguments)
     {
 	Environment environment = new Environment(closure);
+
 	for (int i = 0; i < declaration.parameters.Count; i++)
 	{
 	    environment.define(declaration.parameters[i].lexeme, arguments[i]);
