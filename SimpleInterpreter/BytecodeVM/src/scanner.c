@@ -25,7 +25,7 @@ static char peek() {
   return *scanner.current;
 }
 
-static char peekNext() {
+static char peek_next() {
   if (is_at_end()) return '\0';
   return scanner.current[1];
 }
@@ -60,7 +60,7 @@ static token_t error_token(const char *message) {
 
 }
 
-static bool isAlpha(char c) {
+static bool is_alpha(char c) {
   return (c >= 'a' && c <= 'z') ||
          (c >= 'A' && c <= 'Z') ||
           c == '_';
@@ -84,7 +84,7 @@ static void skip_whitespace() {
         advance();
         break;
       case '/':
-        if (peekNext() == '/') {
+        if (peek_next() == '/') {
           // A comment goes until the end of the line.
           while (peek() != '\n' && !is_at_end()) advance();
         } else {

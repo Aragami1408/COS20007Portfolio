@@ -67,8 +67,21 @@ void vm$free() {
 }
 
 interpret_result_t vm$interpret(const char *source) {
-  compiler$compile(source);
-  return INTERPRET_OK;
+  chunk_t chunk;
+  chunk$init(&chunk);
+
+  if (!compiler$compile(source, &chunk)) {
+    chunk$free(&chunk);
+    return INTERPRET_COMPILE_ERROR;
+  }
+
+  vm.chunk = &chunk;
+  vm.ip = vm.chunk->code;
+
+  interpret_result_t result = run();
+
+  chunk$free(&chunk);
+  return result;
 }
 
 void vm$push(value_t value) {
