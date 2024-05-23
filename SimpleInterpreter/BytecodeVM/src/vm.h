@@ -17,7 +17,10 @@ typedef struct {
   u8* ip;
   value_t stack[STACK_MAX];
   value_t* stack_top;
+  obj_t* objects;
 } vm_t;
+
+extern vm_t vm;
 
 void vm$init();
 void vm$free();
