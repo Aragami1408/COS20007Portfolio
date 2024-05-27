@@ -53,6 +53,7 @@ static void runtime_error(const char *format, ...) {
 static interpret_result_t run() {
 #define READ_BYTE() (*vm.ip++)
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
+#define READ_STRING() AS_STRING(READ_CONSTANT())
 #define BINARY_OP(value_type, op) \
   do { \
     if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
@@ -90,6 +91,32 @@ static interpret_result_t run() {
       case OP_NIL:    vm$push(NIL_VAL); break;
       case OP_TRUE:   vm$push(BOOL_VAL(true)); break;
       case OP_FALSE:  vm$push(BOOL_VAL(false)); break;
+      case OP_POP: vm$pop(); break;
+      case OP_GET_GLOBAL: {
+        obj_string_t *name = READ_STRING();
+        value_t value;
+        if (!table$get(&vm.globals, name, &value)) {
+          runtime_error("Undefined variable '%s'.", name->chars);
+          return INTERPRET_RUNTIME_ERROR;
+        }
+        vm$push(value);
+        break;
+      }
+      case OP_DEFINE_GLOBAL: {
+        obj_string_t *name = READ_STRING();
+        table$set(&vm.globals, name, peek(0));
+        vm$pop();
+        break;
+      }
+      case OP_SET_GLOBAL: {
+        obj_string_t* name = READ_STRING();
+        if (table$set(&vm.globals, name, peek(0))) {
+          table$delete(&vm.globals, name);
+          runtime_error("Undefined variable '%s'.", name->chars);
+          return INTERPRET_RUNTIME_ERROR;
+        }
+        break;
+      }
       case OP_EQUAL: {
         value_t b = vm$pop();
         value_t a = vm$pop();
@@ -126,9 +153,13 @@ static interpret_result_t run() {
         vm$push(NUMBER_VAL(-AS_NUMBER(vm$pop())));
         break;
 
-      case OP_RETURN: {
+      case OP_PRINT:
         print_value(vm$pop());
         printf("\n");
+        break;
+
+      case OP_RETURN: {
+        // Exit interpreter
         return INTERPRET_OK;
       }
     }
@@ -136,6 +167,7 @@ static interpret_result_t run() {
 
 #undef READ_BYTE
 #undef READ_CONSTANT
+#undef READ_STRING
 #undef BINARY_OP
 }
 
@@ -143,9 +175,13 @@ static interpret_result_t run() {
 void vm$init() {
   reset_stack();
   vm.objects = NULL;
+  table$init(&vm.globals);
+  table$init(&vm.strings);
 }
 
 void vm$free() {
+  table$free(&vm.globals);
+  table$free(&vm.strings);
   free_objects();
 }
 
