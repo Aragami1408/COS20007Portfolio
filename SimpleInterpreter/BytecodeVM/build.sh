@@ -11,7 +11,7 @@ mkdir -p $BIN_DIR
 
 # Set the compiler and linker
 CC=gcc
-CFLAGS="-g -c -I$SRC_DIR -Wall -Wextra -pedantic -std=c11"
+CFLAGS="-g -c -I$SRC_DIR -Wall -Wextra -pedantic -std=c11 -DNDEBUG"
 LDFLAGS="-o $BIN_DIR/simp"
 
 # Compile each .c file to an object file

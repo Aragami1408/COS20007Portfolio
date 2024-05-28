@@ -92,6 +92,16 @@ static interpret_result_t run() {
       case OP_TRUE:   vm$push(BOOL_VAL(true)); break;
       case OP_FALSE:  vm$push(BOOL_VAL(false)); break;
       case OP_POP: vm$pop(); break;
+      case OP_GET_LOCAL: {
+        u8 slot = READ_BYTE();
+        vm$push(vm.stack[slot]);
+        break;
+      }
+      case OP_SET_LOCAL: {
+        u8 slot = READ_BYTE();
+        vm.stack[slot] = peek(0);
+        break;
+      }
       case OP_GET_GLOBAL: {
         obj_string_t *name = READ_STRING();
         value_t value;
