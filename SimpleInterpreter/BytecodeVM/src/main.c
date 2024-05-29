@@ -28,7 +28,7 @@ static char* read_file(const char* path) {
   }
   
   fseek(file, 0L, SEEK_END);
-  size_t file_size = ftell(file);
+  usize file_size = ftell(file);
   rewind(file);
 
   char* buffer = (char*)malloc(file_size + 1);
@@ -37,7 +37,7 @@ static char* read_file(const char* path) {
     exit(74);
   }
 
-  size_t bytes_read = fread(buffer, sizeof(char), file_size, file);
+  usize bytes_read = fread(buffer, sizeof(char), file_size, file);
   buffer[bytes_read] = '\0';
 
   if (bytes_read < file_size) {

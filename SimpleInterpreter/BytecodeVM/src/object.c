@@ -37,6 +37,20 @@ static u32 hash_string(const char* key, int length) {
   return hash;
 }
 
+obj_function_t* new_function() {
+  obj_function_t *function = ALLOCATE_OBJ(obj_function_t, OBJ_FUNCTION);
+  function->arity = 0;
+  function->name = NULL;
+  chunk$init(&function->chunk);
+  return function;
+}
+
+obj_native_t* new_native(native_fn_t function) {
+  obj_native_t *native = ALLOCATE_OBJ(obj_native_t, OBJ_NATIVE);
+  native->function = function;
+  return native;
+}
+
 obj_string_t* copy_string(const char* chars, int length) {
   u32 hash = hash_string(chars, length);
   obj_string_t* interned = table$find_string(&vm.strings, chars, length, hash);
@@ -61,10 +75,24 @@ obj_string_t* take_string(char* chars, int length) {
   return allocate_string(chars, length, hash);
 }
 
+void print_function(obj_function_t *function) {
+  if (function->name == NULL) {
+    printf("<script>");
+    return;
+  }
+  printf("<fn %s>", function->name->chars);
+}
+
 void print_object(value_t value) {
   switch (OBJ_TYPE(value)) {
-  case OBJ_STRING:
-    printf("%s", AS_CSTRING(value));
-    break;
+    case OBJ_FUNCTION:
+      print_function(AS_FUNCTION(value));
+      break;
+    case OBJ_NATIVE:
+      printf("<native fn>");
+      break;
+    case OBJ_STRING:
+      printf("%s", AS_CSTRING(value));
+      break;
   }
 }

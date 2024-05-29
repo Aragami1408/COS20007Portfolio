@@ -4,6 +4,6 @@
 #include "object.h"
 #include "vm.h"
 
-bool compiler$compile(const char *source, chunk_t *chunk);
+obj_function_t* compiler$compile(const char *source);
 
 #endif

@@ -4,8 +4,16 @@
 #include "chunk.h"
 #include "value.h"
 #include "table.h"
+#include "object.h"
 
-#define STACK_MAX 256
+#define FRAMES_MAX 64
+#define STACK_MAX (FRAMES_MAX * U8_COUNT)
+
+typedef struct {
+  obj_function_t *function;
+  u8 *ip;
+  value_t *slots;
+} call_frame_t;
 
 typedef enum {
   INTERPRET_OK,
@@ -14,6 +22,9 @@ typedef enum {
 } interpret_result_t;
 
 typedef struct {
+  call_frame_t frames[FRAMES_MAX];
+  int frame_count;
+
   chunk_t* chunk;
   u8* ip;
   value_t stack[STACK_MAX];
