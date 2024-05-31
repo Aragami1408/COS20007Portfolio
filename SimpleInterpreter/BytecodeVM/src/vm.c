@@ -126,7 +126,7 @@ static interpret_result_t run() {
 #define BINARY_OP(value_type, op) \
   do { \
     if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
-      runtime_error("Opearands must be numbers"); \
+      runtime_error("Operands must be numbers"); \
       return INTERPRET_RUNTIME_ERROR; \
     }\
     double b = AS_NUMBER(vm$pop());\
@@ -212,8 +212,40 @@ static interpret_result_t run() {
           double a = AS_NUMBER(vm$pop());
           vm$push(NUMBER_VAL(a+b));
         }
+        else if (IS_NUMBER(peek(0)) && IS_STRING(peek(1))) {
+          char num[50];
+          snprintf(num, 50, "%f", AS_NUMBER(vm$pop()));
+
+          obj_string_t* b = copy_string(num, 50);
+          obj_string_t* a = AS_STRING(vm$pop());
+
+          int length = a->length + b->length;
+          char* chars = ALLOCATE(char, length + 1);
+          memcpy(chars, a->chars, a->length);
+          memcpy(chars + a->length, b->chars, b->length);
+          chars[length] = '\0';
+
+          obj_string_t* result = take_string(chars, length);
+          vm$push(OBJ_VAL(result));
+        }
+        else if (IS_STRING(peek(0)) && IS_NUMBER(peek(1))) {
+          obj_string_t* b = AS_STRING(vm$pop());
+
+          char num[50];
+          snprintf(num, 50, "%f", AS_NUMBER(vm$pop()));
+          obj_string_t* a = copy_string(num, 50);
+
+          int length = a->length + b->length;
+          char* chars = ALLOCATE(char, length + 1);
+          memcpy(chars, a->chars, a->length);
+          memcpy(chars + a->length, b->chars, b->length);
+          chars[length] = '\0';
+
+          obj_string_t* result = take_string(chars, length);
+          vm$push(OBJ_VAL(result));
+        }
         else {
-          runtime_error("Opearands must be two numbers or two strings");
+          runtime_error("Operands must be two numbers or two strings");
           return INTERPRET_RUNTIME_ERROR;
         }
         break;
