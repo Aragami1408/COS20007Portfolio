@@ -53,8 +53,6 @@ public class Program
 
     if (hadError) return;
 
-    // Stop if there was a resolution error
-    if (hadError) return;
 
     interpreter.interpret(statements);
   }
