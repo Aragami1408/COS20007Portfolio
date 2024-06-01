@@ -7,10 +7,10 @@ public abstract class Stmt
 	public interface Visitor<R>
 	{
 		 R visitBlockStmt(Block stmt);
-		 R visitClassStmt(Class stmt);
-		 R visitIfStmt(If stmt);
+		 R visitBreakStmt(Break stmt);
 		 R visitExpressionStmt(Expression stmt);
 		 R visitFunctionStmt(Function stmt);
+		 R visitIfStmt(If stmt);
 		 R visitPrintStmt(Print stmt);
 		 R visitReturnStmt(Return stmt);
 		 R visitVarStmt(Var stmt);
@@ -19,7 +19,7 @@ public abstract class Stmt
 
 	public class Block : Stmt
 	{
-		public Block(List<Stmt> statements)
+		public Block(IEnumerable<Stmt> statements)
 		{
 			this.statements = statements;
 		}
@@ -29,43 +29,20 @@ public abstract class Stmt
 			return visitor.visitBlockStmt(this);
 		}
 
-		public List<Stmt> statements;
+		public IEnumerable<Stmt> statements;
 	}
 
-	public class Class : Stmt
+	public class Break : Stmt
 	{
-		public Class(Token name, List<Stmt.Function> methods)
+		public Break()
 		{
-			this.name = name;
-			this.methods = methods;
 		}
 
 		public override R accept<R>(Visitor<R> visitor)
 		{
-			return visitor.visitClassStmt(this);
+			return visitor.visitBreakStmt(this);
 		}
 
-		public Token name;
-		public List<Stmt.Function> methods;
-	}
-
-	public class If : Stmt
-	{
-		public If(Expr condition, Stmt thenBranch, Stmt elseBranch)
-		{
-			this.condition = condition;
-			this.thenBranch = thenBranch;
-			this.elseBranch = elseBranch;
-		}
-
-		public override R accept<R>(Visitor<R> visitor)
-		{
-			return visitor.visitIfStmt(this);
-		}
-
-		public Expr condition;
-		public Stmt thenBranch;
-		public Stmt elseBranch;
 	}
 
 	public class Expression : Stmt
@@ -85,7 +62,7 @@ public abstract class Stmt
 
 	public class Function : Stmt
 	{
-		public Function(Token name, List<Token> parameters, List<Stmt> body)
+		public Function(Token name, IReadOnlyList<Token> parameters, IReadOnlyList<Stmt> body)
 		{
 			this.name = name;
 			this.parameters = parameters;
@@ -98,8 +75,27 @@ public abstract class Stmt
 		}
 
 		public Token name;
-		public List<Token> parameters;
-		public List<Stmt> body;
+		public IReadOnlyList<Token> parameters;
+		public IReadOnlyList<Stmt> body;
+	}
+
+	public class If : Stmt
+	{
+		public If(Expr condition, Stmt thenBranch, Stmt elseBranch)
+		{
+			this.condition = condition;
+			this.thenBranch = thenBranch;
+			this.elseBranch = elseBranch;
+		}
+
+		public override R accept<R>(Visitor<R> visitor)
+		{
+			return visitor.visitIfStmt(this);
+		}
+
+		public Expr condition;
+		public Stmt thenBranch;
+		public Stmt elseBranch;
 	}
 
 	public class Print : Stmt
