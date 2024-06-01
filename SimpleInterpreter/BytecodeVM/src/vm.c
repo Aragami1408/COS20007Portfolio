@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>
+#include <math.h>
 
 #include "vm.h"
 #include "chunk.h"
@@ -253,6 +254,18 @@ static interpret_result_t run() {
       case OP_SUBTRACT: BINARY_OP(NUMBER_VAL, -); break;
       case OP_MULTIPLY: BINARY_OP(NUMBER_VAL, *); break;
       case OP_DIVIDE:   BINARY_OP(NUMBER_VAL, /); break;
+      case OP_MODULUS:
+        do {
+          if (!((peek(0)).type == VAL_NUMBER) ||
+              !((peek(1)).type == VAL_NUMBER)) {
+            runtime_error("Operands must be numbers");
+            return INTERPRET_RUNTIME_ERROR;
+          }
+          double b = ((vm$pop()).as.number);
+          double a = ((vm$pop()).as.number);
+          vm$push(((value_t){VAL_NUMBER, {.number = fmod(a, b)}}));
+        } while (0);
+        break;
       case OP_NOT:
         vm$push(BOOL_VAL(is_falsey(vm$pop())));
         break;

@@ -197,6 +197,7 @@ token_t scanner$scan_token() {
     case '+': return make_token(TOKEN_PLUS);
     case '/': return make_token(TOKEN_SLASH);
     case '*': return make_token(TOKEN_STAR);
+    case '%': return make_token(TOKEN_PERCENT);
     case '!':
       return make_token(
           match('=') ? TOKEN_BANG_EQUAL : TOKEN_BANG);
