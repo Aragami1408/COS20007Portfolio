@@ -1,4 +1,9 @@
-var i;
-for (i = 1; i <= 5; i++) {
-  print i;
+fun for_test() {
+  var n = 5;
+  var i;
+  for (i = 1; i <= n; i = i + 1) {
+    print i;
+  }
 }
+
+for_test();
