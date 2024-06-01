@@ -18,9 +18,10 @@ public abstract class Expr
 
 	public class Assign : Expr
 	{
-		public Assign(Token name, Expr value)
+		public Assign(Token name, Token op, Expr value)
 		{
 			this.name = name;
+			this.op = op;
 			this.value = value;
 		}
 
@@ -30,6 +31,7 @@ public abstract class Expr
 		}
 
 		public Token name;
+		public Token op;
 		public Expr value;
 	}
 

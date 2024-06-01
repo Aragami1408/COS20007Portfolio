@@ -243,7 +243,7 @@ public class Parser
   {
     Expr expr = or();
 
-    if (match(TokenType.EQUAL))
+    if (match(TokenType.EQUAL) || match(TokenType.PLUS_EQUAL) || match(TokenType.MINUS_EQUAL))
     {
       Token equals = previous();
       Expr value = assignment();
@@ -251,13 +251,10 @@ public class Parser
       if (expr is Expr.Variable variable)
       {
         Token name = variable.name;
-        return new Expr.Assign(name, value);
+        return new Expr.Assign(name, equals, value);
       }
 
       error(equals, "Invalid assignment target.");
-    }
-
-    if (match(TokenType.PLUS_EQUAL)) {
     }
 
     return expr;

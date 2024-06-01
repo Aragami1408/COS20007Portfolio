@@ -45,9 +45,24 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
 
   public object visitAssignExpr(Expr.Assign expr)
   {
+    object destination = environment.get(expr.name);
     object value = evaluate(expr.value);
-
-    environment.assign(expr.name, value);
+    switch (expr.op.type) {
+      case TokenType.EQUAL:
+        environment.assign(expr.name, value);
+        break;
+      case TokenType.PLUS_EQUAL:
+        checkNumberOperands(expr.op, destination, value);
+        environment.assign(expr.name, 
+            (double)destination + (double)value);
+        break;
+      case TokenType.MINUS_EQUAL:
+        checkNumberOperands(expr.op, destination, value);
+        environment.assign(expr.name, 
+            (double)destination - (double)value);
+        break;
+      
+    }
     return value;
   }
 
