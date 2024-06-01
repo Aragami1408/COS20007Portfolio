@@ -4,7 +4,7 @@ public class Program
 {
   public static bool hadError = false;
   public static bool hadRuntimeError = false;
-  private static Interpreter interpreter = Interpreter.getInstance();
+  public static Interpreter interpreter = new Interpreter();
 
   static void Main(string[] args)
   {
@@ -52,9 +52,6 @@ public class Program
     List<Stmt> statements = parser.parse();
 
     if (hadError) return;
-
-    Resolver resolver = new Resolver(interpreter);
-    resolver.resolve(statements);
 
     // Stop if there was a resolution error
     if (hadError) return;
