@@ -13,7 +13,8 @@ DEBUG_FLAGS="-ggdb -O0"
 RELEASE_FLAGS="-O2 -DNDEBUG"
 
 # Output executable name
-EXECUTABLE="simpc"
+DEBUG_EXE="simpc_debug"
+RELEASE_EXE="simpc_release"
 
 # Function to compile source files
 compile() {
@@ -35,8 +36,9 @@ compile() {
 # Function to link object files into executable
 link() {
     local FLAGS=$1
-    echo $CC $OBJ_DIR/*.o -o "$BIN_DIR/$EXECUTABLE" $FLAGS
-    $CC $OBJ_DIR/*.o -o "$BIN_DIR/$EXECUTABLE" $FLAGS
+    local EXE_PROFILE=$2
+    echo $CC $OBJ_DIR/*.o -o "$BIN_DIR/$EXE_PROFILE" $FLAGS
+    $CC $OBJ_DIR/*.o -o "$BIN_DIR/$EXE_PROFILE" $FLAGS
     if [ $? -ne 0 ]; then
         echo "Linking failed"
         exit 1
@@ -48,22 +50,36 @@ clean() {
     rm -rf "$OBJ_DIR" "$BIN_DIR"
 }
 
-# Parse command line argument
-if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 [debug|release|clean]"
+usage() {
+    echo "Usage: $0 [debug|release|clean] [gcc|clang]"
     exit 1
+}
+
+if [ -z "$2" ]
+then
+  echo "No second argument supplied, assume gcc"
+  CC=gcc
 fi
+
+case "$2" in
+  gcc)
+    CC=gcc
+    ;;
+  clang)
+    CC=clang
+    ;;
+esac
 
 case "$1" in
     debug)
         echo "Building in debug mode..."
         compile "$DEBUG_FLAGS"
-        link "$DEBUG_FLAGS"
+        link "$DEBUG_FLAGS" "$DEBUG_EXE"
         ;;
     release)
         echo "Building in release mode..."
         compile "$RELEASE_FLAGS"
-        link "$RELEASE_FLAGS"
+        link "$RELEASE_FLAGS" "$RELEASE_EXE"
         ;;
     clean)
         echo "Cleaning up..."
@@ -71,9 +87,9 @@ case "$1" in
         ;;
     *)
         echo "Invalid option: $1"
-        echo "Usage: $0 [debug|release|clean]"
-        exit 1
+        usage
         ;;
 esac
+
 
 echo "Done."
