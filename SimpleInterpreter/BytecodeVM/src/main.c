@@ -74,5 +74,6 @@ int main(int argc, const char* argv[]) {
   }
 
   vm$free();
+
   return 0;
 }
