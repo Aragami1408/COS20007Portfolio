@@ -3,49 +3,39 @@ namespace SimpleInterpreter;
 
 public class SimpFunction : ICallable
 {
-    private Stmt.Function declaration;
-    private Environment closure;
+	private Stmt.Function declaration;
+	private Environment closure;
 
-    public SimpFunction(Stmt.Function declaration, Environment closure)
-    {
-	this.closure = closure;
-	this.declaration = declaration;
-    }
-
-    public SimpFunction bind(SimpInstance instance)
-    {
-	Environment environment = new Environment(closure);
-	environment.define("this", instance);
-	return new SimpFunction(declaration, environment);
-    }
-
-    public int Arity()
-    {
-	return declaration.parameters.Count;
-    }
-
-    public object call(Interpreter interpreter, List<object> arguments)
-    {
-	Environment environment = new Environment(closure);
-
-	for (int i = 0; i < declaration.parameters.Count; i++)
+	public SimpFunction(Stmt.Function declaration, Environment closure)
 	{
-	    environment.define(declaration.parameters[i].lexeme, arguments[i]);
+		this.closure = closure;
+		this.declaration = declaration;
 	}
 
-	try
-	{
-	    interpreter.executeBlock(declaration.body, environment);
-	}
-	catch (SimpReturn returnValue)
-	{
-	    return returnValue.value;
-	}
-	return null;
-    }
+	public int Arity => declaration.parameters.Count();
 
-    public override string? ToString()
-    {
-	return "<fn " + declaration.name.lexeme + ">";
-    }
+	public object call(Interpreter interpreter, params object[] arguments)
+	{
+		Environment environment = new Environment(closure);
+
+		for (int i = 0; i < arguments.Length; i++)
+		{
+			environment.define(declaration.parameters[i].lexeme, arguments[i]);
+		}
+
+		try
+		{
+			interpreter.executeBlock(declaration.body, environment);
+		}
+		catch (SimpReturn returnValue)
+		{
+			return returnValue.value;
+		}
+		return null;
+	}
+
+	public override string? ToString()
+	{
+		return "<fn " + declaration.name.lexeme + ">";
+	}
 }

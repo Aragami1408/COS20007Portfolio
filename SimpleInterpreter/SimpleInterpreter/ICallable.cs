@@ -2,6 +2,6 @@
 
 public interface ICallable
 {
-  int Arity();
-  object call(Interpreter interpreter, List<object> arguments);
+  int Arity { get; }
+  object call(Interpreter interpreter, params object[] arguments);
 }

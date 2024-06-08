@@ -35,6 +35,7 @@ public class Scanner
     _keywords.Add("true", TokenType.TRUE);
     _keywords.Add("var", TokenType.VAR);
     _keywords.Add("while", TokenType.WHILE);
+    _keywords.Add("break", TokenType.BREAK);
   }
 
   public string Source { get => _source; set => _source = value; }
@@ -104,14 +105,15 @@ public class Scanner
       case '}': addToken(TokenType.RIGHT_BRACE); break;
       case ',': addToken(TokenType.COMMA); break;
       case '.': addToken(TokenType.DOT); break;
-      case '-': addToken(TokenType.MINUS); break;
-      case '+': addToken(TokenType.PLUS); break;
+      case '-': addToken(match('=') ? TokenType.MINUS_EQUAL : TokenType.MINUS); break;
+      case '+': addToken(match('=') ? TokenType.PLUS_EQUAL : TokenType.PLUS); break;
       case ';': addToken(TokenType.SEMICOLON); break;
       case '*': addToken(TokenType.STAR); break; 
       case '!': addToken(match('=') ? TokenType.BANG_EQUAL : TokenType.BANG); break;
       case '=': addToken(match('=') ? TokenType.EQUAL_EQUAL : TokenType.EQUAL); break;
       case '<': addToken(match('=') ? TokenType.LESS_EQUAL : TokenType.LESS); break;
       case '>': addToken(match('=') ? TokenType.GREATER_EQUAL : TokenType.GREATER); break;
+      case '%': addToken(TokenType.PERCENT); break;
       case '/':
                 if (match('/'))
                 {

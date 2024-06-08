@@ -8,22 +8,20 @@ public abstract class Expr
 	{
 		 R visitAssignExpr(Assign expr);
 		 R visitBinaryExpr(Binary expr);
-		 R visitCallExpr(Call expr);
-		 R visitGetExpr(Get expr);
-		 R visitGroupingExpr(Grouping expr);
+		 R visitUnaryExpr(Unary expr);
 		 R visitLiteralExpr(Literal expr);
 		 R visitLogicalExpr(Logical expr);
-		 R visitSetExpr(Set expr);
-		 R visitThisExpr(This expr);
-		 R visitUnaryExpr(Unary expr);
+		 R visitGroupingExpr(Grouping expr);
+		 R visitCallExpr(Call expr);
 		 R visitVariableExpr(Variable expr);
 	}
 
 	public class Assign : Expr
 	{
-		public Assign(Token name, Expr value)
+		public Assign(Token name, Token op, Expr value)
 		{
 			this.name = name;
+			this.op = op;
 			this.value = value;
 		}
 
@@ -33,6 +31,7 @@ public abstract class Expr
 		}
 
 		public Token name;
+		public Token op;
 		public Expr value;
 	}
 
@@ -55,60 +54,26 @@ public abstract class Expr
 		public Expr right;
 	}
 
-	public class Call : Expr
+	public class Unary : Expr
 	{
-		public Call(Expr callee, Token paren, List<Expr> arguments)
+		public Unary(Token op, Expr right)
 		{
-			this.callee = callee;
-			this.paren = paren;
-			this.arguments = arguments;
+			this.op = op;
+			this.right = right;
 		}
 
 		public override R accept<R>(Visitor<R> visitor)
 		{
-			return visitor.visitCallExpr(this);
+			return visitor.visitUnaryExpr(this);
 		}
 
-		public Expr callee;
-		public Token paren;
-		public List<Expr> arguments;
-	}
-
-	public class Get : Expr
-	{
-		public Get(Expr obj, Token name)
-		{
-			this.obj = obj;
-			this.name = name;
-		}
-
-		public override R accept<R>(Visitor<R> visitor)
-		{
-			return visitor.visitGetExpr(this);
-		}
-
-		public Expr obj;
-		public Token name;
-	}
-
-	public class Grouping : Expr
-	{
-		public Grouping(Expr expression)
-		{
-			this.expression = expression;
-		}
-
-		public override R accept<R>(Visitor<R> visitor)
-		{
-			return visitor.visitGroupingExpr(this);
-		}
-
-		public Expr expression;
+		public Token op;
+		public Expr right;
 	}
 
 	public class Literal : Expr
 	{
-		public Literal(Object value)
+		public Literal(object value)
 		{
 			this.value = value;
 		}
@@ -118,7 +83,7 @@ public abstract class Expr
 			return visitor.visitLiteralExpr(this);
 		}
 
-		public Object value;
+		public object value;
 	}
 
 	public class Logical : Expr
@@ -140,55 +105,38 @@ public abstract class Expr
 		public Expr right;
 	}
 
-	public class Set : Expr
+	public class Grouping : Expr
 	{
-		public Set(Expr obj, Token name, Expr value)
+		public Grouping(Expr expression)
 		{
-			this.obj = obj;
-			this.name = name;
-			this.value = value;
+			this.expression = expression;
 		}
 
 		public override R accept<R>(Visitor<R> visitor)
 		{
-			return visitor.visitSetExpr(this);
+			return visitor.visitGroupingExpr(this);
 		}
 
-		public Expr obj;
-		public Token name;
-		public Expr value;
+		public Expr expression;
 	}
 
-	public class This : Expr
+	public class Call : Expr
 	{
-		public This(Token keyword)
+		public Call(Expr callee, Token parenthesis, IEnumerable<Expr> arguments)
 		{
-			this.keyword = keyword;
+			this.callee = callee;
+			this.parenthesis = parenthesis;
+			this.arguments = arguments;
 		}
 
 		public override R accept<R>(Visitor<R> visitor)
 		{
-			return visitor.visitThisExpr(this);
+			return visitor.visitCallExpr(this);
 		}
 
-		public Token keyword;
-	}
-
-	public class Unary : Expr
-	{
-		public Unary(Token op, Expr right)
-		{
-			this.op = op;
-			this.right = right;
-		}
-
-		public override R accept<R>(Visitor<R> visitor)
-		{
-			return visitor.visitUnaryExpr(this);
-		}
-
-		public Token op;
-		public Expr right;
+		public Expr callee;
+		public Token parenthesis;
+		public IEnumerable<Expr> arguments;
 	}
 
 	public class Variable : Expr

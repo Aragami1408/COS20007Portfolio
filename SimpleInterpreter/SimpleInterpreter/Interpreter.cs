@@ -2,28 +2,26 @@
 
 public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
 {
-  public Environment _globals;
-
-  public Environment _environment;
-  private readonly Dictionary<Expr, int> _locals = new Dictionary<Expr, int>();
-
-  private Interpreter() 
-  {
-    _globals = new Environment();
-    this._environment = _globals;
-
-    ClockFunc clockFunc = new ClockFunc();
-    _globals.define("clock", clockFunc);
+  public enum ExecuteResult {
+    CONTINUE,
+    BREAK
   }
 
-  private static Interpreter _instance;
+  private readonly object breakInterrupt = new object();
+  private static object undefined = new object();
+  public Environment environment;
+  public Environment Globals {get; private set;}
 
-  public static Interpreter getInstance()
+
+  public Interpreter() 
   {
-    if (_instance == null)
-      _instance = new Interpreter();
-    return _instance;
+    environment = new Environment();
+    Globals = new Environment();
+
+    Globals.define("clock",
+        new NativeFunction("clock", (_, __) => new TimeSpan(DateTime.Now.Ticks).TotalSeconds));
   }
+
 
   public void interpret(List<Stmt> statements)
   {
@@ -40,29 +38,31 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
     }
   }
 
-  public void resolve(Expr expr, int depth)
+  private ExecuteResult execute(Stmt stmt)
   {
-    _locals.Add(expr, depth);
-  }
-
-  private void execute(Stmt stmt)
-  {
-    stmt.accept(this);
+    return (stmt.accept(this) == breakInterrupt) ? ExecuteResult.BREAK : ExecuteResult.CONTINUE;
   }
 
   public object visitAssignExpr(Expr.Assign expr)
   {
+    object destination = environment.get(expr.name);
     object value = evaluate(expr.value);
-
-    if (_locals.TryGetValue(expr, out int distance))
-    {
-      _environment.assignAt(distance, expr.name, value);
+    switch (expr.op.type) {
+      case TokenType.EQUAL:
+        environment.assign(expr.name, value);
+        break;
+      case TokenType.PLUS_EQUAL:
+        checkNumberOperands(expr.op, destination, value);
+        environment.assign(expr.name, 
+            (double)destination + (double)value);
+        break;
+      case TokenType.MINUS_EQUAL:
+        checkNumberOperands(expr.op, destination, value);
+        environment.assign(expr.name, 
+            (double)destination - (double)value);
+        break;
+      
     }
-    else
-    {
-      _globals.assign(expr.name, value);
-    }
-
     return value;
   }
 
@@ -99,22 +99,25 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
       case TokenType.PLUS:
         if (left is double && right is double)
           return (double)left + (double)right;
-        if (left is string && right is string)
+        else if (left is string && right is string)
           return (string)left + (string)right;	
-        if (left is string && right is double)
+        else if (left is string && right is double)
           return (string)left + stringify(right);
-        if (left is double && right is string)
+        else if (left is double && right is string)
           return stringify(left) + (string)right;
         throw new RuntimeError(expr.op, "Operands must be two numbers or two strings");
       case TokenType.MINUS:
         checkNumberOperands(expr.op, left, right);
-        return (double) left - (double)right;
+        return (double)left - (double)right;
       case TokenType.STAR:
         checkNumberOperands(expr.op, left, right);
-        return (double) left * (double)right;
+        return (double)left * (double)right;
       case TokenType.SLASH:
         checkNumberOperands(expr.op, left, right);
-        return (double) left / (double)right;
+        return (double)left / (double)right;
+      case TokenType.PERCENT:
+        checkNumberOperands(expr.op, left, right);
+        return (double)left % (double)right;
     }
 
     return null;
@@ -124,39 +127,17 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
   {
     object callee = evaluate(expr.callee);
 
-    List<object> arguments = new List<object>();
-    foreach (Expr argument in expr.arguments)
-    {
-      arguments.Add(evaluate(argument));
+    if (callee is ICallable function) {
+      object[] arguments = expr.arguments.Select(evaluate).ToArray();
+
+      if (arguments.Length != function.Arity) {
+        throw new RuntimeError(expr.parenthesis, "Expected " + function.Arity + " arguments but got " + arguments.Length);
+      }
+
+      return function.call(this, arguments);
     }
 
-    if (!(callee is ICallable))
-    {
-      throw new RuntimeError(expr.paren, "Can only call functions and classes.");
-    }
-
-    ICallable function = (ICallable)callee;
-    if (arguments.Count != function.Arity())
-    {
-      throw new RuntimeError(expr.paren, 
-          "Expected " 
-          + function.Arity()
-          + " arguments but got " 
-          + arguments.Count + ".");
-    }
-
-    return function.call(this, arguments);
-  }
-
-  public object visitGetExpr(Expr.Get expr)
-  {
-    object obj = evaluate(expr.obj);
-    if (obj is SimpInstance)
-    {
-      return ((SimpInstance) obj).get(expr.name);
-    }
-
-    throw new RuntimeError(expr.name, "Only instances have properties");
+    throw new RuntimeError(expr.parenthesis, "Can only call functions");
   }
 
   public object visitGroupingExpr(Expr.Grouping expr)
@@ -172,59 +153,48 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
   public object visitLogicalExpr(Expr.Logical expr)
   {
     object left = evaluate(expr.left);
-    
-    if (expr.op.type == TokenType.OR)
+
+    if (expr.op.type == TokenType.OR && isTruthy(left))
     {
-      if (isTruthy(left))
-        return left;
+      return left;
     }
-    else
+    else if (expr.op.type == TokenType.AND && !isTruthy(left))
     {
-      if (!isTruthy(left))
-        return left;
+      return left;
     }
 
     return evaluate(expr.right);
   }
 
-  public object visitSetExpr(Expr.Set expr)
+  public object visitVariableExpr(Expr.Variable expr)
   {
-    object obj = evaluate(expr.obj);
-
-    if (!(obj is SimpInstance))
-      throw new RuntimeError(expr.name, "Only instances have fields");
-
-    object value = evaluate(expr.value);
-    ((SimpInstance) obj).set(expr.name, value);
-
+    object value = environment.get(expr.name);
+    if (value == undefined) {
+      throw new RuntimeError(expr.name, "The variable " + expr.name.lexeme + "has not been properly initialized"); 
+    }
     return value;
   }
 
-  public object visitThisExpr(Expr.This expr)
+  public ExecuteResult executeBlock(IEnumerable<Stmt> statements, Environment env)
   {
-    return lookUpVariable(expr.keyword, expr);
-  }
-
-  public object visitVariableExpr(Expr.Variable expr)
-  {
-    return lookUpVariable(expr.name, expr);
-  }
-
-  public void executeBlock(List<Stmt> statements, Environment env)
-  {
-    Environment previous = this._environment;
+    Environment previous = this.environment;
 
     try
     {
-      this._environment = env;
+      this.environment = env;
 
-      foreach (Stmt statement in statements)
-        execute(statement);
+      foreach (Stmt statement in statements) 
+      {
+        if(execute(statement) == ExecuteResult.BREAK)
+          return ExecuteResult.BREAK;
+      }
     }
     finally
     {
-      this._environment = previous;
+      this.environment = previous;
     }
+
+    return ExecuteResult.CONTINUE;
   }
 
   public object visitExpressionStmt(Stmt.Expression stmt)
@@ -254,52 +224,42 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
 
   public object visitVarStmt(Stmt.Var stmt)
   {
-    object value = null;
+    object value = undefined;
     if (stmt.initializer != null)
     {
       value = evaluate(stmt.initializer);
     }
 
-    _environment.define(stmt.name.lexeme, value);
+    environment.define(stmt.name.lexeme, value);
     return null;
   }
 
   public object visitFunctionStmt(Stmt.Function stmt)
   {
-    SimpFunction function = new SimpFunction(stmt, _environment);
-    _environment.define(stmt.name.lexeme, function);
+    SimpFunction function = new SimpFunction(stmt, environment);
+    environment.define(stmt.name.lexeme, function);
+
     return null;
   }
 
   public object visitBlockStmt(Stmt.Block stmt)
   {
-    executeBlock(stmt.statements, new Environment(_environment));
-    return null;
-  }
-
-  public object visitClassStmt(Stmt.Class stmt)
-  {
-    _environment.define(stmt.name.lexeme, null);
-
-    Dictionary<string, SimpFunction> methods = new Dictionary<string, SimpFunction>();
-    foreach (Stmt.Function method in stmt.methods)
-    {
-      SimpFunction function = new SimpFunction(method, _environment);
-      methods.Add(method.name.lexeme, function);
-    }
-
-    SimpClass simpClass = new SimpClass(stmt.name.lexeme, methods);
-
-    _environment.assign(stmt.name, simpClass);
-    return null;
+    ExecuteResult result = executeBlock(stmt.statements, new Environment(environment));
+    return result == ExecuteResult.BREAK ? breakInterrupt : null;
   }
 
   public object visitIfStmt(Stmt.If stmt)
   {
-    if (isTruthy(evaluate(stmt.condition)))
-      execute(stmt.thenBranch);
-    else if (stmt.elseBranch != null)
-      execute(stmt.elseBranch);
+    object condition = evaluate(stmt.condition);
+
+    if (isTruthy(condition)) {
+      if (execute(stmt.thenBranch) == ExecuteResult.BREAK)
+        return breakInterrupt;
+    }
+    else if (stmt.elseBranch != null) {
+      if (execute(stmt.elseBranch) == ExecuteResult.BREAK)
+        return breakInterrupt;
+    }
 
     return null;
   }
@@ -308,11 +268,11 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
   {
     while (isTruthy(evaluate(stmt.condition)))
     {
-      execute(stmt.body);
+      if(execute(stmt.body) == ExecuteResult.BREAK)
+        break;
     }
     return null;
   }
-
 
   public object visitUnaryExpr(Expr.Unary expr)
   {
@@ -330,18 +290,6 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
     return null;
   }
 
-  private object lookUpVariable(Token name, Expr expr)
-  {
-    if (_locals.TryGetValue(expr, out int distance))
-    {
-      return _environment.getAt(distance, name.lexeme);
-    }
-    else
-    {
-      return _globals.get(name);
-    }
-  }
-
   private object evaluate(Expr expr)
   {
     return expr.accept(this);
@@ -354,6 +302,7 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
     if (obj is double)
     {
       string text = obj.ToString();
+
       if (text.EndsWith(".0"))
       {
         text = text.Substring(0, text.Length - 2);
@@ -369,6 +318,12 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
     }
 
     return obj.ToString();
+  }
+
+  private void checkDivideByZero(Token op, double denominator) {
+    if (denominator == 0) {
+      throw new RuntimeError(op, "Can't divide by zero");
+    }
   }
 
   private void checkNumberOperand(Token op, object operand)
@@ -398,4 +353,8 @@ public sealed class Interpreter : Stmt.Visitor<object>, Expr.Visitor<object>
     return a.Equals(b);
   }
 
+  public object visitBreakStmt(Stmt.Break stmt)
+  {
+    return breakInterrupt;
+  }
 }

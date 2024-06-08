@@ -1,0 +1,10 @@
+var sum = 0;
+for (var i = 1; i <= 1000; i = i + 1) {
+    var square = i * i;
+    if (square % 2 == 0) {
+        sum = sum + square;
+    } else {
+        sum = sum - square;
+    }
+}
+print sum;

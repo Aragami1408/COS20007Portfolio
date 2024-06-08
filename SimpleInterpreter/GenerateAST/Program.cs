@@ -12,25 +12,22 @@ public class GenerateAst
 
     string outputDir = args[0];
     defineAst(outputDir, "Expr", new List<string>(new string[] {
-      "Assign   : Token name, Expr value",
+      "Assign   : Token name, Token op, Expr value",
       "Binary   : Expr left, Token op, Expr right",
-      "Call     : Expr callee, Token paren, List<Expr> arguments",
-      "Get      : Expr obj, Token name",
-      "Grouping : Expr expression",
-      "Literal  : Object value",
-      "Logical  : Expr left, Token op, Expr right",
-      "Set      : Expr obj, Token name, Expr value",
-      "This     : Token keyword",
       "Unary    : Token op, Expr right",
+      "Literal  : object value",
+      "Logical  : Expr left, Token op, Expr right",
+      "Grouping : Expr expression",
+      "Call     : Expr callee, Token parenthesis, IEnumerable<Expr> arguments",
       "Variable : Token name"
     }));
 
     defineAst(outputDir, "Stmt", new List<string>(new string[] {
-      "Block      : List<Stmt> statements",
-      "Class      : Token name, List<Stmt.Function> methods",
-      "If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
+      "Block      : IEnumerable<Stmt> statements",
+      "Break      : ",
       "Expression : Expr expression",
-      "Function   : Token name, List<Token> parameters, List<Stmt> body",
+      "Function   : Token name, IReadOnlyList<Token> parameters, IReadOnlyList<Stmt> body",
+      "If         : Expr condition, Stmt thenBranch, Stmt elseBranch",
       "Print      : Expr expression",
       "Return     : Token keyword, Expr value",
       "Var        : Token name, Expr initializer",
@@ -41,6 +38,7 @@ public class GenerateAst
   private static void defineAst(string outputDir, string baseName, List<string> types)
   {
     string path = outputDir + "/" + baseName + ".cs";
+
     StreamWriter writer = new StreamWriter(path);
 
       writer.WriteLine("namespace SimpleInterpreter;");
@@ -53,10 +51,13 @@ public class GenerateAst
       writer.WriteLine("{");
       defineVisitor(writer, baseName, types);
       writer.WriteLine();
+
       foreach (string type in types)
       {
-        string className = type.Split(":")[0].Trim();
-        string fields = type.Split(":")[1].Trim();
+        var parts = type.Split(":");
+
+        var className = parts[0].Trim();
+        var fields = parts[1].Trim();
         defineType(writer, baseName, className, fields);
         writer.WriteLine();
       }
@@ -79,7 +80,7 @@ public class GenerateAst
       writer.WriteLine("\t\t{");
 
       // store parameters in fields
-      string[] fields = fieldList.Split(", "); 
+      string[] fields = fieldList.Split(", ", StringSplitOptions.RemoveEmptyEntries); 
       foreach (string field in fields)
       {
         string name = field.Split(" ")[1];

@@ -4,21 +4,29 @@ public class Parser
 {
   private sealed class ParseError : SystemException {}
   private List<Token> _tokens;
-  private int current;
+  private int current = 0;
+  private int loopDepth = 0;
 
   public List<Token> Tokens { get => _tokens; set => _tokens = value; }
 
   public Parser(List<Token> tokens)
   {
     _tokens = tokens;
-    current = 0;
   }
 
   public List<Stmt> parse()
   {
     List<Stmt> statements = new List<Stmt>();
-    while (!isAtEnd())
-      statements.Add(declaration());
+    try 
+    {
+      while (!isAtEnd())
+        statements.Add(declaration());
+    }
+    catch (ParseError) 
+    {
+      return null;
+    }
+
     return statements;
   }
 
@@ -27,7 +35,6 @@ public class Parser
     try
     {
       if (match(TokenType.VAR)) return varDeclaration();
-      if (match(TokenType.CLASS)) return classDeclaration();
       if (match(TokenType.FUN)) return function("function");
 
       return statement();
@@ -51,22 +58,6 @@ public class Parser
     return new Stmt.Var(name, initializer);
   }
 
-  private Stmt classDeclaration()
-  {
-    Token name = consume(TokenType.IDENTIFIER, "Expect class name");
-    consume(TokenType.LEFT_BRACE, "Expect '{' before class body");
-
-    List<Stmt.Function> methods = new List<Stmt.Function>();
-    while (!check(TokenType.RIGHT_BRACE) && !isAtEnd())
-    {
-      methods.Add(function("method"));
-    }
-
-    consume(TokenType.RIGHT_BRACE, "Expect '}' after class body");
-
-    return new Stmt.Class(name, methods);
-  }
-
   private Stmt.Function function(string kind)
   {
     Token name = consume(TokenType.IDENTIFIER, "Expect " + kind + " name.");
@@ -85,14 +76,15 @@ public class Parser
     }
 
     consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters");
-
     consume(TokenType.LEFT_BRACE, "Expect '{' before " + kind + " body.");
+
     List<Stmt> body = block();
     return new Stmt.Function(name, parameters, body);
   }
 
   private Stmt statement()
   {
+    if (match(TokenType.BREAK)) return breakStatement();
     if (match(TokenType.IF)) return ifStatement();
     if (match(TokenType.PRINT)) return printStatement();
     if (match(TokenType.RETURN)) return returnStatement();
@@ -101,6 +93,17 @@ public class Parser
     if (match(TokenType.LEFT_BRACE)) return new Stmt.Block(block());
 
     return expressionStatement();
+  }
+
+  private Stmt breakStatement() {
+    if (loopDepth == 0) 
+    {
+      error(previous(), "Must be inside a loop to use break");
+    }
+
+    consume(TokenType.SEMICOLON, "Expect ';' after 'break'.");
+
+    return new Stmt.Break();
   }
 
   private Stmt expressionStatement()
@@ -117,6 +120,7 @@ public class Parser
     consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition");
 
     Stmt thenBranch = statement();
+
     Stmt elseBranch = null;
     if (match(TokenType.ELSE))
       elseBranch = statement();
@@ -134,6 +138,7 @@ public class Parser
   private Stmt returnStatement()
   {
     Token keyword = previous();
+
     Expr value = null;
     if (!check(TokenType.SEMICOLON))
     {
@@ -146,56 +151,75 @@ public class Parser
 
   private Stmt whileStatement()
   {
-    consume(TokenType.LEFT_PAREN, "Expect '(' after while");
-    Expr condition = expression();
-    consume(TokenType.RIGHT_PAREN, "Expect ')' after condition");
-    Stmt body = statement();
+    try 
+    {
+      loopDepth++;
+      consume(TokenType.LEFT_PAREN, "Expect '(' after while");
+      Expr condition = expression();
+      consume(TokenType.RIGHT_PAREN, "Expect ')' after condition");
+      Stmt body = statement();
 
-    return new Stmt.While(condition, body);
+      return new Stmt.While(condition, body);
+    }
+    finally
+    {
+      loopDepth--;
+    }
   }
 
   private Stmt forStatement()
   {
-    consume(TokenType.LEFT_PAREN, "Expect '(' after for");
-    
-    Stmt initializer;
-    if (match(TokenType.SEMICOLON))
-      initializer = null;
-    else if (match(TokenType.VAR))
-      initializer = varDeclaration();
-    else
-      initializer = expressionStatement();
 
-    Expr condition = null;
-    if(!check(TokenType.SEMICOLON))
-      condition = expression();
-    consume(TokenType.SEMICOLON, "Expect ';' after loop condition");
-
-    Expr increment = null;
-    if (!check(TokenType.RIGHT_PAREN))
-      increment = expression();
-    consume(TokenType.RIGHT_PAREN, "Expect ')' after for clauses");
-    Stmt body = statement();
-
-    if (increment != null)
+    try 
     {
-      body = new Stmt.Block(new List<Stmt>(new Stmt[] {
-            body,
-            new Stmt.Expression(increment)
-      }));
+      loopDepth++;
+
+      consume(TokenType.LEFT_PAREN, "Expect '(' after for");
+
+      Stmt initializer;
+      if (match(TokenType.SEMICOLON))
+        initializer = null;
+      else if (match(TokenType.VAR))
+        initializer = varDeclaration();
+      else
+        initializer = expressionStatement();
+
+      Expr condition = null;
+      if(!match(TokenType.SEMICOLON)) {
+        condition = expression();
+        consume(TokenType.SEMICOLON, "Expect ';' after loop condition");
+      }
+
+      Expr increment = null;
+      if (!match(TokenType.RIGHT_PAREN)) {
+        increment = expression();
+        consume(TokenType.RIGHT_PAREN, "Expect ')' after for clauses");
+      }
+      Stmt body = statement();
+      if (increment != null)
+      {
+        body = new Stmt.Block(new List<Stmt>(new Stmt[] {
+              body,
+              new Stmt.Expression(increment)
+              }));
+      }
+
+      if (condition == null) 
+        condition = new Expr.Literal(true);
+      body = new Stmt.While(condition, body);
+
+      if (initializer != null)
+        body = new Stmt.Block(new List<Stmt>(new Stmt[] {
+              initializer,
+              body
+              }));
+
+      return body;
     }
-
-    if (condition == null) 
-      condition = new Expr.Literal(true);
-    body = new Stmt.While(condition, body);
-
-    if (initializer != null)
-      body = new Stmt.Block(new List<Stmt>(new Stmt[] {
-            initializer,
-            body
-      }));
-
-    return body;
+    finally
+    {
+      loopDepth--;
+    }
   }
 
   private List<Stmt> block()
@@ -219,20 +243,15 @@ public class Parser
   {
     Expr expr = or();
 
-    if (match(TokenType.EQUAL))
+    if (match(TokenType.EQUAL) || match(TokenType.PLUS_EQUAL) || match(TokenType.MINUS_EQUAL))
     {
       Token equals = previous();
       Expr value = assignment();
 
-      if (expr is Expr.Variable)
+      if (expr is Expr.Variable variable)
       {
-        Token name = ((Expr.Variable)expr).name;
-        return new Expr.Assign(name, value);
-      }
-      else if (expr is Expr.Get)
-      {
-        Expr.Get get = (Expr.Get) expr;
-        return new Expr.Set(get.obj, get.name, value);
+        Token name = variable.name;
+        return new Expr.Assign(name, equals, value);
       }
 
       error(equals, "Invalid assignment target.");
@@ -315,7 +334,7 @@ public class Parser
   {
     Expr expr = unary();
 
-    while (match(TokenType.STAR, TokenType.SLASH))
+    while (match(TokenType.STAR, TokenType.SLASH, TokenType.PERCENT))
     {
       Token op = previous();
       Expr right = unary();
@@ -365,11 +384,6 @@ public class Parser
     {
       if (match(TokenType.LEFT_PAREN))
         expr = finishCall(expr);
-      else if (match(TokenType.DOT))
-      {
-        Token name = consume(TokenType.IDENTIFIER, "Expect property name after '.'");
-        expr = new Expr.Get(expr, name);
-      }
       else
         break;
     }
@@ -386,7 +400,6 @@ public class Parser
     if (match(TokenType.NUMBER, TokenType.STRING))
       return new Expr.Literal(previous().literal);
 
-    if (match(TokenType.THIS)) return new Expr.This(previous());
 
     if (match(TokenType.IDENTIFIER))
       return new Expr.Variable(previous());

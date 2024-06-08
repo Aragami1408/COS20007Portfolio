@@ -1,0 +1,12 @@
+fun isPrime(n) {
+    if (n <= 1) return false;
+    for (var i = 2; i * i <= n; i = i + 1) {
+        if (n % i == 0) return false;
+    }
+    return true;
+}
+for (var i = 2; i <= 100; i = i + 1) {
+    if (isPrime(i)) {
+        print i;
+    }
+}
